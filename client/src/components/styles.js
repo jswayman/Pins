@@ -79,7 +79,8 @@ const S = {
   headerUserActive: {
     background: "rgba(255,182,18,0.12)", border: "1px solid rgba(255,182,18,0.35)",
   },
-  headerAvatar: { fontSize: "1.3rem", lineHeight: 1 },
+  headerAvatar: { fontSize: "1.3rem", lineHeight: 1, display: "flex", alignItems: "center" },
+  headerAvatarImg: { width: 28, height: 28, borderRadius: "50%", objectFit: "cover" },
   headerUserName: {
     fontFamily: FONT_DISPLAY, fontSize: "0.85rem", color: C.text,
     letterSpacing: "0.04em", maxWidth: 110, overflow: "hidden",
@@ -371,6 +372,55 @@ const S = {
     border: "3px solid rgba(255,255,255,0.15)",
     borderTopColor: C.gold, borderRadius: "50%",
     animation: "spin 0.7s linear infinite",
+  },
+
+  // ── Overlay / full-screen modal ───────────────────────────────────────────
+  overlay: {
+    position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)",
+    backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-start", justifyContent: "center",
+    zIndex: 1000, overflowY: "auto", padding: "16px",
+  },
+  modal: {
+    background: "rgba(8,22,8,0.97)", border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: 18, padding: "28px 24px", maxWidth: 480, width: "100%",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.8)", flexShrink: 0,
+  },
+  microBtn: {
+    background: "transparent", color: "rgba(255,255,255,0.3)",
+    border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
+    padding: "10px 14px", fontSize: "0.75rem", fontFamily: FONT_DISPLAY, cursor: "pointer",
+    minHeight: 44, display: "inline-flex", alignItems: "center",
+  },
+  primaryBtn: {
+    display: "block", width: "100%", padding: "12px", marginTop: 18,
+    background: `linear-gradient(135deg,#27ae60,#2ecc71)`, color: "#fff",
+    border: "none", borderRadius: 10,
+    fontFamily: FONT_DISPLAY, fontSize: "1rem", fontWeight: 700,
+    letterSpacing: "0.05em", cursor: "pointer",
+  },
+  ghostBtn: {
+    display: "block", width: "100%", padding: "10px", marginTop: 10,
+    background: "transparent", color: "#7dbb7d",
+    border: "1px solid rgba(125,187,125,0.25)", borderRadius: 10,
+    fontFamily: FONT_DISPLAY, fontSize: "0.88rem", cursor: "pointer",
+    letterSpacing: "0.04em",
+  },
+  row: { display: "flex", gap: 12 },
+  profileDivider: { height: 1, background: "rgba(255,255,255,0.08)", margin: "16px 0 10px" },
+  profilePwToggle: {
+    background: "transparent", border: "none", color: "rgba(255,255,255,0.4)",
+    fontFamily: FONT_DISPLAY, fontSize: "0.82rem", cursor: "pointer",
+    padding: 0, letterSpacing: "0.04em", marginBottom: 4,
+  },
+  uploadBtn: {
+    padding: "8px 14px", background: "rgba(255,255,255,0.04)",
+    border: "1px dashed rgba(255,255,255,0.2)", borderRadius: 9,
+    color: "rgba(255,255,255,0.5)", fontFamily: FONT_DISPLAY,
+    fontSize: "0.82rem", cursor: "pointer", letterSpacing: "0.04em",
+  },
+  uploadPreview: {
+    width: 38, height: 38, borderRadius: "50%", objectFit: "cover",
+    border: "2px solid #FFB612",
   },
 
   // ── Auth ──────────────────────────────────────────────────────────────────

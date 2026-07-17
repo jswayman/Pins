@@ -55,6 +55,26 @@ export const forgotPw    = (body)  => post("/api/auth/forgot", body);
 export const resetPw     = (body)  => post("/api/auth/reset", body);
 export const getProfile  = (tok)   => get("/api/auth/profile", tok);
 
+export const updateProfile = (body) =>
+  fetch("/api/auth/profile", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then(async r => {
+    const d = await r.json();
+    if (!r.ok) { const e = new Error(d.error || "Update failed"); e.status = r.status; throw e; }
+    return d;
+  });
+
+export const checkAvailability = (params) =>
+  fetch(`/api/auth/check?${new URLSearchParams(params)}`).then(r => r.json());
+
+export const deleteAccount = (token) =>
+  fetch("/api/auth/account", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(r => r.json());
+
 // ── Tournaments ───────────────────────────────────────────────────────────────
 export const getTournaments       = ()        => get("/api/pins/tournaments");
 export const getTournament        = (id)      => get(`/api/pins/tournaments/${id}`);
