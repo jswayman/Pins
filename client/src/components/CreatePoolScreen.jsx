@@ -35,7 +35,12 @@ function TournamentCard({ t, selected, onSelect }) {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-          {statusBadge(t.status)}
+          <div style={{ display: "flex", gap: 4 }}>
+            {t.tour && (
+              <span style={{ ...S.badgeGray, fontSize: "0.68rem" }}>{t.tour}</span>
+            )}
+            {statusBadge(t.status)}
+          </div>
           {t.prize_purse_cents > 0 && (
             <span style={{ fontFamily: FONT_DISPLAY, fontSize: "0.8rem", color: C.gold }}>
               {fmt$(t.prize_purse_cents)} purse
