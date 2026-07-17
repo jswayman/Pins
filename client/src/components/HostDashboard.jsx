@@ -137,7 +137,7 @@ export default function HostDashboard({ poolCode, onBack }) {
         </div>
       </div>
 
-      <div style={S.page}>
+      <div style={{ ...S.page, paddingBottom: 120 }}>
         {error && <div style={S.errorBanner}>{error}</div>}
         {info  && <div style={S.infoBanner}>{info}</div>}
 

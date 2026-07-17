@@ -8,12 +8,13 @@ import CreatePoolScreen  from "./components/CreatePoolScreen";
 import LeaderboardScreen from "./components/LeaderboardScreen";
 import PickEntryScreen   from "./components/PickEntryScreen";
 import HostDashboard     from "./components/HostDashboard";
+import PinsTabBar        from "./components/PinsTabBar";
 import S, { C, FONT_DISPLAY } from "./components/styles";
 
 // Check for ?join=CODE or /join/CODE in URL
-const urlParams   = new URLSearchParams(window.location.search);
-const URL_JOIN    = urlParams.get("join")?.toUpperCase() || null;
-const IS_ADMIN    = window.location.pathname === "/admin";
+const urlParams = new URLSearchParams(window.location.search);
+const URL_JOIN  = urlParams.get("join")?.toUpperCase() || null;
+const IS_ADMIN  = window.location.pathname === "/admin";
 
 function LoadingScreen() {
   return (
@@ -32,24 +33,30 @@ export default function App() {
 
   // ── Screen state ──────────────────────────────────────────────────────────
   // "home" | "admin" | "create" | "pool" | "pick" | "host"
-  const [screen, setScreen] = useState("loading");
+  const [screen, setScreen]             = useState("loading");
+  const [homeTab, setHomeTab]           = useState("mine");  // "mine" | "public"
   const [activePoolCode, setActivePoolCode] = useState(null);
-  const [activePool, setActivePool]         = useState(null);
-  const [pickContext, setPickContext]        = useState(null); // { tournamentId }
+  const [activePool, setActivePool]     = useState(null);
+  const [pickContext, setPickContext]   = useState(null);
 
   // Navigate to a pool's leaderboard
   function openPool(code) {
     setActivePoolCode(code);
     setScreen("pool");
-    // Clean up URL after deep-link join
     if (window.location.search.includes("join=")) {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }
 
-  // Fetch pool details whenever we land on pool screen
+  // Manage a pool as host (skip leaderboard, go straight to dashboard)
+  function managePool(code) {
+    setActivePoolCode(code);
+    setScreen("host");
+  }
+
+  // Fetch pool details whenever we land on pool or host screen
   useEffect(() => {
-    if (screen === "pool" && activePoolCode) {
+    if ((screen === "pool" || screen === "host") && activePoolCode) {
       getPool(activePoolCode)
         .then(setActivePool)
         .catch(() => setActivePool(null));
@@ -60,17 +67,21 @@ export default function App() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { setScreen("auth"); return; }
-
     if (IS_ADMIN) { setScreen("admin"); return; }
     if (URL_JOIN) {
-      // Auto-join and navigate to pool
       joinPool(URL_JOIN)
         .then(() => openPool(URL_JOIN))
-        .catch(() => openPool(URL_JOIN)); // open even if already joined
+        .catch(() => openPool(URL_JOIN));
       return;
     }
     setScreen("home");
   }, [authLoading, user]);
+
+  // ── Tab bar visibility & Manage tab ──────────────────────────────────────
+  const showTabBar = !authLoading && !!user && !["auth", "loading", "admin", "pick"].includes(screen);
+  // Show Manage tab when in a pool view and user is the host
+  const isHostOfActivePool = activePool?.isHost === true;
+  const showManageTab = showTabBar && (screen === "pool" || screen === "host") && isHostOfActivePool;
 
   // ── Render ────────────────────────────────────────────────────────────────
   if (authLoading || screen === "loading") return <LoadingScreen />;
@@ -85,10 +96,19 @@ export default function App() {
 
   if (screen === "create") {
     return (
-      <CreatePoolScreen
-        onBack={() => setScreen("home")}
-        onCreated={(code) => openPool(code)}
-      />
+      <>
+        <CreatePoolScreen
+          onBack={() => setScreen("home")}
+          onCreated={(code) => openPool(code)}
+        />
+        <PinsTabBar
+          screen={screen}
+          homeTab={homeTab}
+          onHome={() => { setHomeTab("mine"); setScreen("home"); }}
+          onBrowse={() => { setHomeTab("public"); setScreen("home"); }}
+          onCreate={() => setScreen("create")}
+        />
+      </>
     );
   }
 
@@ -106,34 +126,65 @@ export default function App() {
 
   if (screen === "host" && activePoolCode) {
     return (
-      <HostDashboard
-        poolCode={activePoolCode}
-        onBack={() => setScreen("pool")}
-      />
+      <>
+        <HostDashboard
+          poolCode={activePoolCode}
+          onBack={() => setScreen("pool")}
+        />
+        <PinsTabBar
+          screen={screen}
+          homeTab={homeTab}
+          onHome={() => { setHomeTab("mine"); setScreen("home"); }}
+          onBrowse={() => { setHomeTab("public"); setScreen("home"); }}
+          onCreate={() => setScreen("create")}
+          onManage={() => setScreen("host")}
+        />
+      </>
     );
   }
 
   if (screen === "pool" && activePoolCode) {
     return (
-      <LeaderboardScreen
-        poolCode={activePoolCode}
-        currentUser={user}
-        onBack={() => setScreen("home")}
-        onPickEntry={() => {
-          if (activePool) {
-            setPickContext({ tournamentId: activePool.tournament_id });
-          }
-          setScreen("pick");
-        }}
-        onHostDashboard={() => setScreen("host")}
-      />
+      <>
+        <LeaderboardScreen
+          poolCode={activePoolCode}
+          currentUser={user}
+          onBack={() => setScreen("home")}
+          onPickEntry={() => {
+            if (activePool) setPickContext({ tournamentId: activePool.tournament_id });
+            setScreen("pick");
+          }}
+          onHostDashboard={() => setScreen("host")}
+        />
+        <PinsTabBar
+          screen={screen}
+          homeTab={homeTab}
+          onHome={() => { setHomeTab("mine"); setScreen("home"); }}
+          onBrowse={() => { setHomeTab("public"); setScreen("home"); }}
+          onCreate={() => setScreen("create")}
+          onManage={showManageTab ? () => setScreen("host") : undefined}
+        />
+      </>
     );
   }
 
+  // Default: home screen
   return (
-    <HomeScreen
-      onOpenPool={openPool}
-      onCreatePool={() => setScreen("create")}
-    />
+    <>
+      <HomeScreen
+        onOpenPool={openPool}
+        onCreatePool={() => setScreen("create")}
+        onManagePool={managePool}
+        activeTab={homeTab}
+        onSetTab={setHomeTab}
+      />
+      <PinsTabBar
+        screen={screen}
+        homeTab={homeTab}
+        onHome={() => { setHomeTab("mine"); setScreen("home"); }}
+        onBrowse={() => { setHomeTab("public"); setScreen("home"); }}
+        onCreate={() => setScreen("create")}
+      />
+    </>
   );
 }

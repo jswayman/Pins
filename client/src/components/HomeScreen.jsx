@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getPools, getPublicPools, joinPool } from "../api";
+import { useAuth } from "../hooks/useAuth";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
 import PinsHeader from "./PinsHeader";
 
@@ -14,7 +15,7 @@ function statusDot(tournamentStatus) {
   return <span style={{ color: C.textDim, fontSize: "0.6rem", marginRight: 4 }}>○</span>;
 }
 
-function PoolCard({ pool, onOpen }) {
+function PoolCard({ pool, onOpen, onManage, isHost }) {
   const statusStyle = pool.status === "open" ? S.badgeGreen : pool.status === "locked" ? S.badgeGold : S.badgeGray;
 
   return (
@@ -51,17 +52,28 @@ function PoolCard({ pool, onOpen }) {
           {pool.is_public && <span style={{ marginRight: 6 }}>PUBLIC</span>}
           by {pool.host_username}
         </div>
-        <span style={statusStyle}>{pool.status?.toUpperCase()}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {isHost && onManage && (
+            <button
+              style={{ ...S.btnSmallGold, padding: "4px 10px", fontSize: "0.72rem" }}
+              onClick={e => { e.stopPropagation(); onManage(pool.code); }}
+              title="Host Dashboard"
+            >
+              ⚙️ Manage
+            </button>
+          )}
+          <span style={statusStyle}>{pool.status?.toUpperCase()}</span>
+        </div>
       </div>
     </div>
   );
 }
 
-export default function HomeScreen({ onOpenPool, onCreatePool }) {
+export default function HomeScreen({ onOpenPool, onCreatePool, onManagePool, activeTab, onSetTab }) {
+  const { user } = useAuth();
   const [myPools, setMyPools]     = useState([]);
   const [publicPools, setPublic]  = useState([]);
   const [loading, setLoading]     = useState(true);
-  const [tab, setTab]             = useState("mine");
   const [joinCode, setJoinCode]   = useState("");
   const [joining, setJoining]     = useState(false);
   const [joinError, setJoinError] = useState("");
@@ -70,7 +82,8 @@ export default function HomeScreen({ onOpenPool, onCreatePool }) {
     Promise.all([getPools(), getPublicPools()])
       .then(([mine, pub]) => {
         setMyPools(mine);
-        setPublic(pub.filter(p => !mine.find(m => m.code === p.code)));
+        // Don't filter out your own public pools — show them in Browse with a badge
+        setPublic(pub);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -90,6 +103,9 @@ export default function HomeScreen({ onOpenPool, onCreatePool }) {
     }
   }
 
+  const tab = activeTab || "mine";
+  const setTab = onSetTab || (() => {});
+
   return (
     <div style={S.root}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -97,7 +113,7 @@ export default function HomeScreen({ onOpenPool, onCreatePool }) {
 
       <PinsHeader />
 
-      <div style={S.page}>
+      <div style={{ ...S.page, paddingBottom: 120 }}>
 
         {/* ── Join by code ── */}
         <div style={{ ...S.container, marginBottom: 0, marginTop: 16 }}>
@@ -166,7 +182,15 @@ export default function HomeScreen({ onOpenPool, onCreatePool }) {
                     <div style={{ fontSize: "0.8rem" }}>Create one or join with a code above.</div>
                   </div>
                 ) : (
-                  myPools.map(p => <PoolCard key={p.code} pool={p} onOpen={onOpenPool} />)
+                  myPools.map(p => (
+                    <PoolCard
+                      key={p.code}
+                      pool={p}
+                      onOpen={onOpenPool}
+                      onManage={onManagePool}
+                      isHost={user && p.host_user_id === user.id}
+                    />
+                  ))
                 )
               )}
               {tab === "public" && (
@@ -176,16 +200,35 @@ export default function HomeScreen({ onOpenPool, onCreatePool }) {
                     <div>No public pools right now.</div>
                   </div>
                 ) : (
-                  publicPools.map(p => <PoolCard key={p.code} pool={p} onOpen={onOpenPool} />)
+                  publicPools.map(p => {
+                    const isMine = user && p.host_user_id === user.id;
+                    return (
+                      <div key={p.code} style={{ position: "relative" }}>
+                        {isMine && (
+                          <div style={{
+                            position: "absolute", top: 8, right: 8, zIndex: 2,
+                            background: C.goldDim, border: `1px solid ${C.goldBorder}`,
+                            borderRadius: 8, padding: "2px 8px",
+                            fontFamily: FONT_DISPLAY, fontSize: "0.65rem", color: C.gold, letterSpacing: "0.06em",
+                          }}>
+                            YOU HOST
+                          </div>
+                        )}
+                        <PoolCard
+                          pool={p}
+                          onOpen={onOpenPool}
+                          onManage={onManagePool}
+                          isHost={isMine}
+                        />
+                      </div>
+                    );
+                  })
                 )
               )}
             </>
           )}
         </div>
       </div>
-
-      {/* ── FAB: Create Pool ── */}
-      <button style={S.fab} onClick={onCreatePool} title="Create Pool">+</button>
     </div>
   );
 }

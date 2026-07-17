@@ -210,7 +210,7 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
         }
       />
 
-      <div style={S.pageWide}>
+      <div style={{ ...S.pageWide, paddingBottom: 120 }}>
         {error && <div style={S.errorBanner}>{error}</div>}
 
         {/* Join code */}
