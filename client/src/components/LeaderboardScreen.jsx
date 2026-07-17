@@ -314,6 +314,36 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
               )}
             </div>
 
+            {/* Scoring explainer */}
+            <div style={{
+              background: "rgba(255,182,18,0.06)",
+              border: `1px solid ${C.goldBorder}`,
+              borderRadius: 10,
+              padding: "10px 12px",
+              marginBottom: 14,
+              fontFamily: FONT_BODY,
+              fontSize: "0.78rem",
+              color: C.textDim,
+              lineHeight: 1.5,
+            }}>
+              <strong style={{ color: C.gold, fontFamily: FONT_DISPLAY, letterSpacing: "0.04em" }}>How scores work: </strong>
+              Each golfer's finish × PGA payout % × tournament purse
+              {pool.prize_purse_cents > 0 && (
+                <> ({fmt$(pool.prize_purse_cents)})</>
+              )}
+              . Your total = sum of your 10 picks. Cash paid out comes from entry fees, not the PGA purse.{" "}
+              <button
+                type="button"
+                onClick={() => window.open("/help.html#scoring", "_blank")}
+                style={{
+                  background: "none", border: "none", padding: 0, cursor: "pointer",
+                  color: C.gold, fontSize: "0.78rem", textDecoration: "underline", fontFamily: FONT_BODY,
+                }}
+              >
+                Learn more
+              </button>
+            </div>
+
             {/* Leaderboard */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <div style={S.sectionTitle}>LEADERBOARD — {entries.length} {entries.length === 1 ? "ENTRY" : "ENTRIES"}</div>

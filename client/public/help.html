@@ -184,8 +184,8 @@
 
     <!-- 1 -->
     <h2 id="what-is-pins">1 · What is Pins?</h2>
-    <p>Pins is a PGA Tour golf pick'em pool app. Before a tournament starts, each player selects 10 golfers from the tournament field. When the tournament concludes, your score is the combined prize earnings of all 10 golfers you picked. Highest total earnings wins the pot.</p>
-    <p>Pins supports any PGA Tour event pulled directly from the ESPN Golf API. Earnings are calculated from the tournament's official prize purse using the standard PGA payout percentage table.</p>
+    <p>Pins is a PGA Tour golf pick'em pool app. Before a tournament starts, each player selects 10 golfers from the tournament field. Your score is the combined estimated prize earnings of those golfers (finish × PGA payout % × tournament purse). Highest score wins your friends' entry-fee pot.</p>
+    <p>See <a href="#scoring" style="color:#FFB612">How scoring works</a> for the full math, including ties, cuts, and how that differs from cash payouts.</p>
     <div class="tip"><strong>Tip:</strong> Picks are locked by the host before the tournament starts — choose strategically! Picks can't be changed once the pool is locked.</div>
 
     <!-- 2 -->
@@ -233,15 +233,55 @@
 
     <!-- 6 -->
     <h2 id="scoring">6 · How scoring works</h2>
-    <p>Your pool score is the <strong>sum of prize earnings</strong> for all 10 golfers you selected, based on their final finishing position in the tournament.</p>
-    <h3>Prize purse</h3>
-    <p>The host sets the tournament prize purse (in cents). The admin may also set this from the Admin Panel. Pins uses the standard PGA Tour payout percentage table — e.g., 1st place typically earns 18% of the purse.</p>
+    <p>There are <strong>two different pots</strong> — don't mix them up:</p>
+    <ul>
+      <li><strong>Tournament prize purse</strong> — the real PGA/LPGA purse for that event (from ESPN, or set by an admin). Used only to <em>score</em> your picks.</li>
+      <li><strong>Pool pot</strong> — entry fees collected from players in <em>your</em> Pins pool. That's what winners actually get paid from.</li>
+    </ul>
+
+    <h3>Your pool score (leaderboard dollars)</h3>
+    <p>Your score is the <strong>sum of estimated prize earnings</strong> for all 10 golfers you picked, based on each golfer's finishing position and the tournament purse.</p>
+    <p>For each golfer:</p>
+    <ol>
+      <li>Look up their finish (1st, 2nd, T5, etc.) from live ESPN results.</li>
+      <li>Multiply the tournament purse by the standard PGA Tour payout % for that place.</li>
+      <li>Add that dollar amount into your total.</li>
+    </ol>
+    <p><strong>Highest total score wins the pool.</strong> The dollar amounts on the leaderboard are a scoring system — they are not automatically paid out by the app.</p>
+
+    <h3>Worked example</h3>
+    <p>Say the tournament purse is <strong>$20,000,000</strong>:</p>
+    <ul>
+      <li>1st place → 18.00% → <strong>$3,600,000</strong></li>
+      <li>2nd place → 10.80% → <strong>$2,160,000</strong></li>
+      <li>10th place → 2.70% → <strong>$540,000</strong></li>
+      <li>Missed cut / WD → <strong>$0</strong></li>
+    </ul>
+    <p>If your 10 picks finish 1st, 10th, and eight cuts, your score is:</p>
+    <p><strong>$3,600,000 + $540,000 + $0… = $4,140,000</strong></p>
+    <p>That $4.14M is your standings score. What you win from the <em>friends pool</em> still depends on the entry fee and payout split (see below).</p>
+
+    <h3>PGA payout percentages (top finishes)</h3>
+    <p>Pins uses the standard PGA Tour prize distribution table (positions 1–65). Highlights:</p>
+    <ul>
+      <li>1st · 18.00% &nbsp;·&nbsp; 2nd · 10.80% &nbsp;·&nbsp; 3rd · 6.80%</li>
+      <li>4th · 4.80% &nbsp;·&nbsp; 5th · 4.00% &nbsp;·&nbsp; 10th · 2.70%</li>
+      <li>20th · 1.40% &nbsp;·&nbsp; 30th · 0.67% &nbsp;·&nbsp; 50th · 0.26%</li>
+    </ul>
+    <p>Positions beyond the published table earn $0 in Pins scoring. The tournament purse amount comes from ESPN when available; an admin can override it if needed.</p>
+
     <h3>Ties</h3>
-    <p>Tied golfers split the combined earnings of their tied positions equally, exactly as the PGA Tour does. For example, if two golfers tie for 3rd, each receives the average of the 3rd and 4th place earnings.</p>
+    <p>Tied golfers split the combined percentages of the tied places — same idea as the real Tour. Example: two players tie for 3rd → they split (6.80% + 4.80%) = 11.60%, so each gets <strong>5.80%</strong> of the purse.</p>
+
     <h3>Cut golfers</h3>
-    <p>Golfers who miss the cut earn $0 in your pool. If your picks include cut golfers, those spots contribute nothing to your total.</p>
+    <p>Golfers who miss the cut (or withdraw) earn <strong>$0</strong>. Those picks drag your total down, so depth after the cut line matters.</p>
+
+    <h3>Who wins cash from your pool?</h3>
+    <p>After scores settle, the <strong>pool pot</strong> = number of entries × entry fee. The host's payout split (default 70% / 20% / 10% for 1st / 2nd / 3rd) decides how that pot is divided among the top pool finishers. Example: 10 entries × $20 = $200 pot → 1st gets $140, 2nd $40, 3rd $20.</p>
+    <div class="tip"><strong>Remember:</strong> Leaderboard “earnings” rank the pick'em. The entry-fee pot is what friends actually settle up (cash, Venmo, etc.) — Pins does not process payments.</div>
+
     <h3>Live updates</h3>
-    <p>The server polls ESPN every 5 minutes during active tournaments. The leaderboard refreshes automatically — pull down to refresh manually at any time.</p>
+    <p>During active tournaments the server refreshes ESPN results about every 5 minutes and recalculates every entry's score. Open the <strong>📺 Field</strong> tab to see the live golfer board; the <strong>🏆 Pool</strong> tab shows your pick'em standings.</p>
 
     <!-- 7 -->
     <h2 id="host-dashboard">7 · Host Dashboard</h2>
