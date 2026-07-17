@@ -3,6 +3,7 @@ import { getPool } from "../api";
 import { getDisplayName } from "../utils/displayName";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
 import PinsHeader from "./PinsHeader";
+import ShareModal from "./ShareModal";
 
 const REFRESH_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -149,6 +150,7 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
   const [refreshing, setRefreshing] = useState(false);
   const [expanded, setExpanded] = useState({});
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [showShare, setShowShare] = useState(false);
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -195,6 +197,7 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
   const payout = pool.payout || {};
 
   return (
+    <>
     <div style={S.root}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={S.fieldBg} />
@@ -243,9 +246,16 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
               + Add Entry
             </button>
           )}
+          <button
+            style={{ ...S.btnSmall, flexShrink: 0 }}
+            onClick={() => setShowShare(true)}
+            title="Invite players"
+          >
+            📲 Invite
+          </button>
           {isHost && (
-            <button style={{ ...S.btnSmallGold, flex: 1 }} onClick={onHostDashboard}>
-              Host Dashboard
+            <button style={{ ...S.btnSmallGold, flexShrink: 0 }} onClick={onHostDashboard}>
+              ⚙️ Manage
             </button>
           )}
         </div>
@@ -279,5 +289,14 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
         )}
       </div>
     </div>
+
+    {showShare && (
+      <ShareModal
+        pool={pool}
+        hostName={pool.host_display_name || pool.host_username}
+        onClose={() => setShowShare(false)}
+      />
+    )}
+  </>
   );
 }

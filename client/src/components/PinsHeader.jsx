@@ -122,6 +122,22 @@ export default function PinsHeader({ onBack, title, subtitle, right }) {
 
                 <div style={S.userMenuDivider} />
 
+                {/* Share app */}
+                <button style={S.userMenuItem} onClick={() => {
+                  setMenuOpen(false);
+                  if (navigator.share) {
+                    navigator.share({
+                      title: "Pins — golf pick'em pools",
+                      text: "Join me on Pins — pick your golfers and win the pot!",
+                      url: "https://pins.yourgamespot.com",
+                    }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText("https://pins.yourgamespot.com").catch(() => {});
+                  }
+                }}>
+                  <span style={S.userMenuIcon}>📲</span> Share Pins
+                </button>
+
                 {/* External links */}
                 <button style={S.userMenuItem} onClick={() => { setMenuOpen(false); window.open("https://yourgamespot.com", "_blank"); }}>
                   <span style={S.gamespotPill}>
