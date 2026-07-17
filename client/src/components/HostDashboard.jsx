@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getPool, lockPool, deletePool, getPayments, markPaid, markUnpaid, getPayoutReport } from "../api";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
+import PinsHeader from "./PinsHeader";
 
 const TABS = { payments: "payments", report: "report", settings: "settings" };
 
@@ -104,23 +105,16 @@ export default function HostDashboard({ poolCode, onBack }) {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={S.fieldBg} />
 
-      {/* Header */}
-      <div style={S.appHeader}>
-        <div style={S.appHeaderRow}>
-          <button style={{ ...S.btnSmall, width: "auto", marginRight: 4 }} onClick={onBack}>← Back</button>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: C.text }}>
-              Host Dashboard
-            </div>
-            <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textDim }}>{pool.name}</div>
-          </div>
-          <span style={isLocked ? S.badgeGold : S.badgeGreen}>
-            {pool.status?.toUpperCase()}
-          </span>
-        </div>
+      <PinsHeader
+        onBack={onBack}
+        title="Host Dashboard"
+        subtitle={pool.name}
+        right={<span style={{ ...(isLocked ? S.badgeGold : S.badgeGreen), marginRight: 6 }}>{pool.status?.toUpperCase()}</span>}
+      />
 
-        {/* Tabs */}
-        <div style={{ display: "flex", borderTop: `1px solid ${C.border}` }}>
+      {/* Tabs */}
+      <div style={{ background: "rgba(6,16,6,0.97)", borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
+        <div style={{ display: "flex" }}>
           {[
             { id: TABS.payments, label: "Payments" },
             { id: TABS.report,   label: "Payout Report" },

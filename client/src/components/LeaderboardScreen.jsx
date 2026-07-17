@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getPool } from "../api";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
+import PinsHeader from "./PinsHeader";
 
 const REFRESH_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -197,24 +198,17 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={S.fieldBg} />
 
-      {/* Header */}
-      <div style={S.appHeader}>
-        <div style={S.appHeaderRow}>
-          <button style={{ ...S.btnSmall, width: "auto", marginRight: 4 }} onClick={onBack}>← Back</button>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "1rem", fontWeight: 700, color: C.text, lineHeight: 1.2 }}>
-              {pool.name}
-            </div>
-            <div style={{ fontFamily: FONT_BODY, fontSize: "0.75rem", color: C.textDim }}>
-              {pool.tournament_name}
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <PinsHeader
+        onBack={onBack}
+        title={pool.name}
+        subtitle={pool.tournament_name}
+        right={
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 6 }}>
             {refreshing && <span style={{ ...S.spinner, width: 16, height: 16, borderWidth: 2 }} />}
             {statusBadge(pool.status, pool.tournament_status)}
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div style={S.pageWide}>
         {error && <div style={S.errorBanner}>{error}</div>}

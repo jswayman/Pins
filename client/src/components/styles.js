@@ -74,12 +74,40 @@ const S = {
     display: "flex", alignItems: "center", gap: 8,
     background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`,
     borderRadius: 24, padding: "5px 12px 5px 6px", cursor: "pointer",
+    transition: "background 0.15s",
+  },
+  headerUserActive: {
+    background: "rgba(255,182,18,0.12)", border: "1px solid rgba(255,182,18,0.35)",
   },
   headerAvatar: { fontSize: "1.3rem", lineHeight: 1 },
   headerUserName: {
     fontFamily: FONT_DISPLAY, fontSize: "0.85rem", color: C.text,
     letterSpacing: "0.04em", maxWidth: 110, overflow: "hidden",
     textOverflow: "ellipsis", whiteSpace: "nowrap",
+  },
+  headerGear: { fontSize: "0.9rem", opacity: 0.5 },
+
+  // ── User dropdown menu ─────────────────────────────────────────────────────
+  userMenu: {
+    position: "absolute", top: "calc(100% + 8px)", right: 0,
+    background: "rgba(8,22,8,0.98)", border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: 12, padding: "6px", minWidth: 200,
+    boxShadow: "0 12px 40px rgba(0,0,0,0.7)", zIndex: 350,
+    overflowY: "auto", WebkitOverflowScrolling: "touch",
+  },
+  userMenuItem: {
+    display: "flex", alignItems: "center", gap: 10, width: "100%",
+    padding: "10px 12px", background: "transparent", border: "none",
+    borderRadius: 8, color: "#fff", fontFamily: FONT_DISPLAY,
+    fontSize: "0.9rem", letterSpacing: "0.04em", cursor: "pointer", textAlign: "left",
+  },
+  userMenuIcon: { fontSize: "1rem", lineHeight: 1, width: 20, textAlign: "center" },
+  userMenuDivider: { height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" },
+  gamespotPill: {
+    display: "inline-flex", alignItems: "center",
+    background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: 20, padding: "4px 12px", fontSize: 12,
+    fontFamily: FONT_DISPLAY, fontWeight: 800, letterSpacing: "0.08em",
   },
 
   // ── Page / content container ──────────────────────────────────────────────

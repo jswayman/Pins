@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { getTournament, submitEntry, getMyEntries } from "../api";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
+import PinsHeader from "./PinsHeader";
 
 const MAX_PICKS = 10;
 
@@ -35,7 +36,7 @@ export default function PickEntryScreen({ poolCode, tournamentId, pool, onBack, 
 
   const golfers = useMemo(() => {
     if (!tournament) return [];
-    // Prefer scored golfers (they have position info), fall back to field list
+    // Prefer live scores (position, score), fall back to field list
     if (tournament.scores?.length) {
       return tournament.scores.map(s => ({
         id:       s.espn_golfer_id,
@@ -46,7 +47,7 @@ export default function PickEntryScreen({ poolCode, tournamentId, pool, onBack, 
       }));
     }
     return (tournament.field || []).map(f => ({
-      id: f.id, name: f.name, position: null, score: null, status: "active",
+      id: f.id || f.espn_golfer_id, name: f.name, position: null, score: null, status: "active",
     }));
   }, [tournament]);
 
@@ -76,54 +77,28 @@ export default function PickEntryScreen({ poolCode, tournamentId, pool, onBack, 
     }
   }
 
-  const maxEntries   = pool?.max_entries_per_player || 1;
-  const canAddEntry  = myEntries.length < maxEntries;
-
-  if (loading) {
-    return <div style={{ ...S.page, textAlign: "center", paddingTop: 60 }}><span style={S.spinner} /></div>;
-  }
-
-  if (!canAddEntry) {
-    return (
-      <div style={S.page}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <button style={{ ...S.btnSmall, width: "auto" }} onClick={onBack}>← Back</button>
-        </div>
-        <div style={S.empty}>
-          <div style={S.emptyIcon}>✓</div>
-          <div>You've used all {maxEntries} entr{maxEntries === 1 ? "y" : "ies"} for this pool.</div>
-        </div>
-      </div>
-    );
-  }
-
-  const entryLabel = myEntries.length > 0 ? `Entry #${myEntries.length + 1}` : "Your Entry";
+  const maxEntries  = pool?.max_entries_per_player || 1;
+  const canAddEntry = myEntries.length < maxEntries;
+  const entryLabel  = myEntries.length > 0 ? `Entry #${myEntries.length + 1}` : "Your Entry";
 
   return (
-    <div style={{ ...S.root }}>
+    <div style={S.root}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={S.fieldBg} />
 
-      {/* Sticky header */}
-      <div style={{
-        position: "sticky", top: 0, zIndex: 100,
-        background: "rgba(6,14,6,0.97)", backdropFilter: "blur(12px)",
-        borderBottom: `1px solid ${C.border}`,
-        padding: "10px 14px",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-          <button style={{ ...S.btnSmall, width: "auto" }} onClick={onBack}>← Back</button>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "1rem", fontWeight: 700, color: C.text, flex: 1 }}>
-            Pick {MAX_PICKS} Golfers
-          </div>
-          <span style={picks.length === MAX_PICKS ? S.badgeGreen : S.badgeGray}>
+      {/* ── Sticky header ── */}
+      <PinsHeader
+        onBack={onBack}
+        title={`Pick ${MAX_PICKS} Golfers`}
+        subtitle={tournament ? `${tournament.name} · ${entryLabel}` : "…"}
+        right={
+          <span style={{ ...(picks.length === MAX_PICKS ? S.badgeGreen : S.badgeGray), marginRight: 6 }}>
             {picks.length}/{MAX_PICKS}
           </span>
-        </div>
-
-        <div style={{ fontFamily: "'Inter',sans-serif", fontSize: "0.8rem", color: C.textDim, marginBottom: 8 }}>
-          {tournament?.name} · {entryLabel}
-        </div>
-
+        }
+      />
+      {/* Search bar row */}
+      <div style={{ background: "rgba(6,16,6,0.97)", borderBottom: `1px solid ${C.border}`, padding: "6px 14px 10px" }}>
         <input
           style={{ ...S.input, marginBottom: 0 }}
           placeholder="Search golfers…"
@@ -132,103 +107,138 @@ export default function PickEntryScreen({ poolCode, tournamentId, pool, onBack, 
         />
       </div>
 
-      <div style={{ padding: "12px 14px 120px" }}>
-        {error && <div style={{ ...S.errorBanner, marginBottom: 12 }}>{error}</div>}
+      {/* ── Content ── */}
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 560, margin: "0 auto", padding: "12px 14px 160px" }}>
 
-        {filtered.length === 0 && (
-          <div style={S.empty}>
-            {search ? `No golfers matching "${search}"` : "No golfers available yet"}
+        {loading && (
+          <div style={{ textAlign: "center", paddingTop: 60 }}>
+            <span style={S.spinner} />
+            <div style={{ fontFamily: FONT_BODY, fontSize: "0.85rem", color: C.textDim, marginTop: 12 }}>
+              Loading field from ESPN…
+            </div>
           </div>
         )}
 
-        {filtered.map(g => {
-          const selected = picks.includes(g.id);
-          const disabled = !selected && picks.length >= MAX_PICKS;
-          return (
-            <div
-              key={g.id}
-              style={{
-                ...(selected ? S.golferCardSelected : S.golferCard),
-                opacity: disabled ? 0.4 : 1,
-              }}
-              onClick={() => !disabled && togglePick(g.id)}
-            >
-              <div style={{
-                width: 24, height: 24, borderRadius: 12, flexShrink: 0,
-                background: selected ? C.gold : "rgba(255,255,255,0.08)",
-                border: selected ? `2px solid ${C.gold}` : `2px solid ${C.border}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: FONT_DISPLAY, fontSize: "0.7rem", fontWeight: 700,
-                color: selected ? "#0a1a08" : C.textDim,
-                transition: "all 0.12s",
-              }}>
-                {selected ? picks.indexOf(g.id) + 1 : ""}
-              </div>
+        {!loading && !canAddEntry && (
+          <div style={S.empty}>
+            <div style={S.emptyIcon}>✓</div>
+            <div>You've used all {maxEntries} {maxEntries === 1 ? "entry" : "entries"} for this pool.</div>
+          </div>
+        )}
 
-              <div style={{ flex: 1 }}>
-                <div style={S.golferName}>{g.name}</div>
-                {g.status === "cut" && (
-                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.7rem", color: C.red }}>CUT</div>
-                )}
-              </div>
+        {!loading && canAddEntry && (
+          <>
+            {error && <div style={{ ...S.errorBanner, marginBottom: 12 }}>{error}</div>}
 
-              {g.position && (
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.85rem", color: C.textDim }}>
-                    T{g.position}
+            {filtered.length === 0 && (
+              <div style={S.empty}>
+                <div style={S.emptyIcon}>🏌️</div>
+                {search
+                  ? <div>No golfers matching "{search}"</div>
+                  : <div style={{ color: C.textDim }}>
+                      No field available yet for this tournament.<br />
+                      <span style={{ fontSize: "0.8rem" }}>
+                        ESPN releases the field closer to tee time. Check back soon.
+                      </span>
+                    </div>
+                }
+              </div>
+            )}
+
+            {filtered.map(g => {
+              const selected = picks.includes(g.id);
+              const disabled = !selected && picks.length >= MAX_PICKS;
+              return (
+                <div
+                  key={g.id}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    background: selected ? C.goldDim : C.bgCard,
+                    border: `1px solid ${selected ? C.goldBorder : C.border}`,
+                    borderRadius: 10, padding: "10px 12px", marginBottom: 6,
+                    cursor: disabled ? "not-allowed" : "pointer",
+                    opacity: disabled ? 0.35 : 1,
+                    userSelect: "none",
+                  }}
+                  onClick={() => !disabled && togglePick(g.id)}
+                >
+                  {/* Pick number bubble */}
+                  <div style={{
+                    width: 26, height: 26, borderRadius: 13, flexShrink: 0,
+                    background: selected ? C.gold : "rgba(255,255,255,0.08)",
+                    border: `2px solid ${selected ? C.gold : C.border}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: FONT_DISPLAY, fontSize: "0.72rem", fontWeight: 700,
+                    color: selected ? "#0a1a08" : C.textDim,
+                  }}>
+                    {selected ? picks.indexOf(g.id) + 1 : ""}
                   </div>
-                  {g.score && (
-                    <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.8rem", color: scoreColor(g.score) }}>
-                      {g.score}
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.9rem", fontWeight: 600, color: g.status === "cut" ? C.textFaint : C.text }}>
+                      {g.name}
+                    </div>
+                    {g.status === "cut" && (
+                      <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.68rem", color: C.red, letterSpacing: "0.06em" }}>CUT</div>
+                    )}
+                  </div>
+
+                  {/* Position / score */}
+                  {g.position && (
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.82rem", color: C.textDim }}>T{g.position}</div>
+                      {g.score && (
+                        <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.78rem", color: scoreColor(g.score) }}>{g.score}</div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Sticky bottom — picks summary + submit */}
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 110,
-        background: "rgba(6,14,6,0.97)", backdropFilter: "blur(12px)",
-        borderTop: `1px solid ${C.border}`,
-        padding: "10px 14px",
-        paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))",
-      }}>
-        {picks.length > 0 && (
-          <div style={{
-            display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8,
-          }}>
-            {picks.map((gId, i) => {
-              const g = golfers.find(x => x.id === gId);
-              return (
-                <div key={gId} style={{
-                  background: C.goldDim,
-                  border: `1px solid ${C.goldBorder}`,
-                  borderRadius: 6, padding: "2px 8px",
-                  fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.gold,
-                  cursor: "pointer",
-                }} onClick={() => togglePick(gId)}>
-                  {i + 1}. {g?.name?.split(" ").pop() || gId} ×
-                </div>
               );
             })}
-          </div>
+          </>
         )}
-
-        <button
-          style={{
-            ...S.btnPrimary,
-            opacity: (picks.length !== MAX_PICKS || saving) ? 0.5 : 1,
-          }}
-          disabled={picks.length !== MAX_PICKS || saving}
-          onClick={handleSubmit}
-        >
-          {saving ? <span style={S.spinner} /> : `Submit Entry (${picks.length}/${MAX_PICKS} selected)`}
-        </button>
       </div>
+
+      {/* ── Sticky bottom bar ── */}
+      {canAddEntry && !loading && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 110,
+          background: "rgba(6,14,6,0.97)", backdropFilter: "blur(12px)",
+          borderTop: `1px solid ${C.border}`,
+          padding: "10px 14px",
+          paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))",
+        }}>
+          {picks.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
+              {picks.map((gId, i) => {
+                const g = golfers.find(x => x.id === gId);
+                return (
+                  <div
+                    key={gId}
+                    style={{
+                      background: C.goldDim, border: `1px solid ${C.goldBorder}`,
+                      borderRadius: 6, padding: "2px 8px",
+                      fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.gold,
+                      cursor: "pointer",
+                    }}
+                    onClick={() => togglePick(gId)}
+                  >
+                    {i + 1}. {g?.name?.split(" ").pop() || gId} ×
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <button
+            style={{ ...S.btnPrimary, opacity: (picks.length !== MAX_PICKS || saving) ? 0.5 : 1 }}
+            disabled={picks.length !== MAX_PICKS || saving}
+            onClick={handleSubmit}
+          >
+            {saving ? <span style={S.spinner} /> : `Submit Entry (${picks.length}/${MAX_PICKS} selected)`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

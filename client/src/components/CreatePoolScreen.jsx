@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getTournaments, createPool } from "../api";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
+import PinsHeader from "./PinsHeader";
 
 function fmt$(cents) {
   if (!cents) return "$0";
@@ -130,13 +131,7 @@ export default function CreatePoolScreen({ onBack, onCreated }) {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={S.fieldBg} />
 
-      {/* Header */}
-      <div style={S.appHeader}>
-        <div style={S.appHeaderRow}>
-          <button style={{ ...S.btnSmall, width: "auto" }} onClick={onBack}>← Back</button>
-          <div style={{ ...S.pageTitle, marginBottom: 0, marginLeft: 8, flex: 1 }}>Create Pool</div>
-        </div>
-      </div>
+      <PinsHeader onBack={onBack} title="Create Pool" />
 
       <div style={S.page}>
         {error && <div style={S.errorBanner}>{error}</div>}

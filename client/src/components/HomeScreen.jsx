@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getPools, getPublicPools, joinPool } from "../api";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
+import PinsHeader from "./PinsHeader";
 
 function fmt$(cents) {
   if (!cents) return "Free";
@@ -56,7 +57,7 @@ function PoolCard({ pool, onOpen }) {
   );
 }
 
-export default function HomeScreen({ currentUser, onOpenPool, onCreatePool, onAdmin }) {
+export default function HomeScreen({ onOpenPool, onCreatePool }) {
   const [myPools, setMyPools]     = useState([]);
   const [publicPools, setPublic]  = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -94,23 +95,7 @@ export default function HomeScreen({ currentUser, onOpenPool, onCreatePool, onAd
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={S.fieldBg} />
 
-      {/* ── Header ── */}
-      <div style={S.appHeader}>
-        <div style={S.appHeaderRow}>
-          <button style={S.headerLogo}>
-            <span style={S.headerLogoText}>PINS</span>
-            <span style={{ ...S.headerLogoSub, marginLeft: 6 }}>golf pool</span>
-          </button>
-          <div style={{ flex: 1 }} />
-          {currentUser?.is_admin && (
-            <button style={{ ...S.btnSmallGold, marginRight: 6 }} onClick={onAdmin}>Admin</button>
-          )}
-          <div style={S.headerUser}>
-            <span style={S.headerAvatar}>⛳</span>
-            <span style={S.headerUserName}>{currentUser?.first_name || currentUser?.username}</span>
-          </div>
-        </div>
-      </div>
+      <PinsHeader />
 
       <div style={S.page}>
 

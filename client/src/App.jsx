@@ -132,10 +132,8 @@ export default function App() {
 
   return (
     <HomeScreen
-      currentUser={user}
       onOpenPool={openPool}
       onCreatePool={() => setScreen("create")}
-      onAdmin={() => setScreen("admin")}
     />
   );
 }
