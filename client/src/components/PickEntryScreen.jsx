@@ -97,8 +97,13 @@ export default function PickEntryScreen({ poolCode, tournamentId, pool, onBack, 
           </span>
         }
       />
-      {/* Search bar row */}
-      <div style={{ background: "rgba(6,16,6,0.97)", borderBottom: `1px solid ${C.border}`, padding: "6px 14px 10px" }}>
+      {/* Search bar — sticky directly below the header */}
+      <div style={{
+        position: "sticky", top: 52, zIndex: 99,
+        background: "rgba(6,14,6,0.97)", backdropFilter: "blur(12px)",
+        borderBottom: `1px solid ${C.border}`,
+        padding: "8px 14px 10px",
+      }}>
         <input
           style={{ ...S.input, marginBottom: 0 }}
           placeholder="Search golfers…"
