@@ -7,54 +7,50 @@ function fmt$(cents) {
   return "$" + (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function tournamentStatusDot(status) {
-  if (status === "active") return <span style={{ color: C.green, marginRight: 4 }}>●</span>;
-  if (status === "completed") return <span style={{ color: C.textFaint, marginRight: 4 }}>●</span>;
-  return <span style={{ color: C.textDim, marginRight: 4 }}>○</span>;
+function statusDot(tournamentStatus) {
+  if (tournamentStatus === "active") return <span style={{ color: C.green, fontSize: "0.6rem", marginRight: 4 }}>●</span>;
+  if (tournamentStatus === "completed") return <span style={{ color: C.textFaint, fontSize: "0.6rem", marginRight: 4 }}>●</span>;
+  return <span style={{ color: C.textDim, fontSize: "0.6rem", marginRight: 4 }}>○</span>;
 }
 
 function PoolCard({ pool, onOpen }) {
+  const statusStyle = pool.status === "open" ? S.badgeGreen : pool.status === "locked" ? S.badgeGold : S.badgeGray;
+
   return (
-    <div style={S.poolCard} onClick={() => onOpen(pool.code)}>
+    <div
+      style={S.poolCard}
+      onClick={() => onOpen(pool.code)}
+      onMouseEnter={e => e.currentTarget.style.background = C.bgCardHover}
+      onMouseLeave={e => e.currentTarget.style.background = C.bgCard}
+    >
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
         <div style={{ flex: 1 }}>
           <div style={S.poolCardTitle}>{pool.name}</div>
-          <div style={S.poolCardMeta}>
-            {tournamentStatusDot(pool.tournament_status)}
+          <div style={{ ...S.poolCardMeta, marginTop: 2 }}>
+            {statusDot(pool.tournament_status)}
             {pool.tournament_name}
           </div>
           {pool.start_date && (
-            <div style={{ fontFamily: FONT_BODY, fontSize: "0.75rem", color: C.textFaint, marginTop: 1 }}>
+            <div style={{ fontFamily: FONT_BODY, fontSize: "0.73rem", color: C.textFaint, marginTop: 2 }}>
               {pool.start_date} – {pool.end_date}
             </div>
           )}
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.85rem", fontWeight: 700, color: C.gold }}>
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.9rem", fontWeight: 700, color: C.gold }}>
             {fmt$(pool.entry_fee_cents)}
           </div>
-          <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textDim }}>
+          <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textDim, marginTop: 1 }}>
             {pool.entry_count} {Number(pool.entry_count) === 1 ? "entry" : "entries"}
           </div>
         </div>
       </div>
-
-      <div style={S.poolCardRow}>
-        <div style={{ display: "flex", gap: 6 }}>
-          {pool.is_public && <span style={S.badgeGray}>PUBLIC</span>}
-          {pool.host_username && (
-            <span style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textFaint }}>
-              by {pool.host_username}
-            </span>
-          )}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+        <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textFaint }}>
+          {pool.is_public && <span style={{ marginRight: 6 }}>PUBLIC</span>}
+          by {pool.host_username}
         </div>
-        <span style={
-          pool.status === "open" ? S.badgeGreen :
-          pool.status === "locked" ? S.badgeGold :
-          S.badgeGray
-        }>
-          {pool.status?.toUpperCase()}
-        </span>
+        <span style={statusStyle}>{pool.status?.toUpperCase()}</span>
       </div>
     </div>
   );
@@ -98,33 +94,36 @@ export default function HomeScreen({ currentUser, onOpenPool, onCreatePool, onAd
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={S.fieldBg} />
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div style={S.appHeader}>
         <div style={S.appHeaderRow}>
-          <button style={S.headerLogo} onClick={() => {}}>
+          <button style={S.headerLogo}>
             <span style={S.headerLogoText}>PINS</span>
-            <span style={S.headerLogoSub}>golf pool</span>
+            <span style={{ ...S.headerLogoSub, marginLeft: 6 }}>golf pool</span>
           </button>
           <div style={{ flex: 1 }} />
           {currentUser?.is_admin && (
-            <button style={S.btnSmallGold} onClick={onAdmin}>Admin</button>
+            <button style={{ ...S.btnSmallGold, marginRight: 6 }} onClick={onAdmin}>Admin</button>
           )}
-          <div style={S.headerUser} onClick={() => {}}>
+          <div style={S.headerUser}>
             <span style={S.headerAvatar}>⛳</span>
-            <span style={S.headerUserName}>{currentUser?.username}</span>
+            <span style={S.headerUserName}>{currentUser?.first_name || currentUser?.username}</span>
           </div>
         </div>
       </div>
 
       <div style={S.page}>
-        {/* Join by code */}
-        <div style={{ ...S.card, marginBottom: 16 }}>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.78rem", fontWeight: 700, color: C.textDim, letterSpacing: "0.1em", marginBottom: 8 }}>
-            JOIN A POOL
-          </div>
+
+        {/* ── Join by code ── */}
+        <div style={{ ...S.container, marginBottom: 0, marginTop: 16 }}>
+          <div style={S.sectionTitle}>Join a Pool</div>
           <form onSubmit={handleJoin} style={{ display: "flex", gap: 8 }}>
             <input
-              style={{ ...S.input, flex: 1, textTransform: "uppercase", letterSpacing: "0.15em", fontFamily: FONT_DISPLAY }}
+              style={{
+                ...S.input, flex: 1,
+                textTransform: "uppercase", letterSpacing: "0.2em",
+                fontFamily: FONT_DISPLAY, fontSize: "1.1rem", textAlign: "center",
+              }}
               placeholder="ENTER CODE"
               value={joinCode}
               onChange={e => setJoinCode(e.target.value.toUpperCase())}
@@ -132,7 +131,10 @@ export default function HomeScreen({ currentUser, onOpenPool, onCreatePool, onAd
             />
             <button
               type="submit"
-              style={{ ...S.btnPrimary, width: "auto", padding: "11px 18px", flexShrink: 0, opacity: joining ? 0.6 : 1 }}
+              style={{
+                ...S.btnPrimary, width: "auto", padding: "11px 20px",
+                flexShrink: 0, opacity: joining ? 0.6 : 1,
+              }}
               disabled={joining}
             >
               {joining ? "…" : "Join"}
@@ -141,59 +143,63 @@ export default function HomeScreen({ currentUser, onOpenPool, onCreatePool, onAd
           {joinError && <div style={{ ...S.errorBanner, marginTop: 8, marginBottom: 0 }}>{joinError}</div>}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 0, marginBottom: 14, borderBottom: `1px solid ${C.border}` }}>
-          {[
-            { id: "mine", label: `My Pools${myPools.length ? ` (${myPools.length})` : ""}` },
-            { id: "public", label: `Browse Public` },
-          ].map(t => (
-            <button
-              key={t.id}
-              style={{
-                flex: 1, padding: "10px 8px", background: "transparent", border: "none",
-                borderBottom: tab === t.id ? `2px solid ${C.gold}` : "2px solid transparent",
-                fontFamily: FONT_DISPLAY, fontSize: "0.82rem", fontWeight: 600,
-                color: tab === t.id ? C.gold : C.textDim,
-                letterSpacing: "0.05em", cursor: "pointer",
-              }}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* ── My Pools / Browse tabs ── */}
+        <div style={{ ...S.container, marginTop: 12 }}>
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 0, marginBottom: 14, borderBottom: `1px solid ${C.border}` }}>
+            {[
+              { id: "mine",   label: `My Pools${myPools.length ? ` (${myPools.length})` : ""}` },
+              { id: "public", label: "Browse Public" },
+            ].map(t => (
+              <button
+                key={t.id}
+                style={{
+                  flex: 1, padding: "10px 8px", background: "transparent", border: "none",
+                  borderBottom: tab === t.id ? `2px solid ${C.gold}` : "2px solid transparent",
+                  fontFamily: FONT_DISPLAY, fontSize: "0.82rem", fontWeight: 600,
+                  color: tab === t.id ? C.gold : C.textDim,
+                  letterSpacing: "0.05em", cursor: "pointer",
+                }}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <span style={S.spinner} />
+            </div>
+          ) : (
+            <>
+              {tab === "mine" && (
+                myPools.length === 0 ? (
+                  <div style={S.empty}>
+                    <div style={S.emptyIcon}>⛳</div>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>No pools yet</div>
+                    <div style={{ fontSize: "0.8rem" }}>Create one or join with a code above.</div>
+                  </div>
+                ) : (
+                  myPools.map(p => <PoolCard key={p.code} pool={p} onOpen={onOpenPool} />)
+                )
+              )}
+              {tab === "public" && (
+                publicPools.length === 0 ? (
+                  <div style={S.empty}>
+                    <div style={S.emptyIcon}>🔍</div>
+                    <div>No public pools right now.</div>
+                  </div>
+                ) : (
+                  publicPools.map(p => <PoolCard key={p.code} pool={p} onOpen={onOpenPool} />)
+                )
+              )}
+            </>
+          )}
         </div>
-
-        {loading ? (
-          <div style={{ textAlign: "center", paddingTop: 40 }}><span style={S.spinner} /></div>
-        ) : (
-          <>
-            {tab === "mine" && (
-              myPools.length === 0 ? (
-                <div style={S.empty}>
-                  <div style={S.emptyIcon}>⛳</div>
-                  <div>No pools yet.</div>
-                  <div style={{ marginTop: 6, fontSize: "0.8rem" }}>Create one or join with a code.</div>
-                </div>
-              ) : (
-                myPools.map(p => <PoolCard key={p.code} pool={p} onOpen={onOpenPool} />)
-              )
-            )}
-
-            {tab === "public" && (
-              publicPools.length === 0 ? (
-                <div style={S.empty}>
-                  <div style={S.emptyIcon}>🔍</div>
-                  <div>No public pools available right now.</div>
-                </div>
-              ) : (
-                publicPools.map(p => <PoolCard key={p.code} pool={p} onOpen={onOpenPool} />)
-              )
-            )}
-          </>
-        )}
       </div>
 
-      {/* FAB — create pool */}
+      {/* ── FAB: Create Pool ── */}
       <button style={S.fab} onClick={onCreatePool} title="Create Pool">+</button>
     </div>
   );

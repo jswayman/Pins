@@ -99,46 +99,57 @@ export default function AdminScreen({ onBack }) {
 
   if (loading) {
     return (
-      <div style={{ ...S.page, textAlign: "center", paddingTop: 60 }}>
-        <span style={S.spinner} />
+      <div style={S.root}>
+        <div style={S.fieldBg} />
+        <div style={{ ...S.page, textAlign: "center", paddingTop: 80 }}>
+          <span style={S.spinner} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={S.page}>
+    <div style={S.root}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={S.fieldBg} />
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <button style={{ ...S.btnSmall, width: "auto" }} onClick={onBack}>← Back</button>
-        <div style={{ ...S.pageTitle, marginBottom: 0, flex: 1 }}>Admin Panel</div>
-      </div>
-
-      {error && <div style={S.errorBanner}>{error}</div>}
-      {info  && <div style={S.infoBanner}>{info}</div>}
-
-      <div style={{ marginBottom: 20 }}>
-        <button
-          style={{ ...S.btnPrimary, opacity: syncing ? 0.7 : 1 }}
-          onClick={handleSync}
-          disabled={syncing}
-        >
-          {syncing ? "Syncing from ESPN…" : "Sync Tournaments from ESPN"}
-        </button>
-        <div style={S.inputHint}>Fetches the current PGA Tour season schedule and adds new tournaments.</div>
-      </div>
-
-      <div style={S.sectionTitle}>Tournaments ({tournaments.length})</div>
-
-      {tournaments.length === 0 && (
-        <div style={S.empty}>
-          <div style={S.emptyIcon}>🏌️</div>
-          No tournaments yet. Click "Sync Tournaments" to import from ESPN.
+      {/* Header */}
+      <div style={S.appHeader}>
+        <div style={S.appHeaderRow}>
+          <button style={{ ...S.btnSmall, width: "auto" }} onClick={onBack}>← Back</button>
+          <div style={{ ...S.pageTitle, marginBottom: 0, marginLeft: 8, flex: 1 }}>Admin Panel</div>
         </div>
-      )}
+      </div>
 
-      {tournaments.map(t => (
-        <div key={t.id} style={S.card}>
+      <div style={S.page}>
+        {error && <div style={S.errorBanner}>{error}</div>}
+        {info  && <div style={S.infoBanner}>{info}</div>}
+
+        <div style={{ ...S.container, marginBottom: 12 }}>
+          <div style={S.sectionTitle}>ESPN Sync</div>
+          <button
+            style={{ ...S.btnSecondary, opacity: syncing ? 0.7 : 1 }}
+            onClick={handleSync}
+            disabled={syncing}
+          >
+            {syncing ? "Syncing from ESPN…" : "↺ Force Sync from ESPN"}
+          </button>
+          <div style={{ ...S.inputHint, marginTop: 6 }}>
+            Tournaments auto-sync on every page load. Use this to force a refresh.
+          </div>
+        </div>
+
+        <div style={S.sectionTitle}>Tournaments ({tournaments.length})</div>
+
+        {tournaments.length === 0 && (
+          <div style={S.empty}>
+            <div style={S.emptyIcon}>🏌️</div>
+            No tournaments found. Check ESPN connectivity.
+          </div>
+        )}
+
+        {tournaments.map(t => (
+          <div key={t.id} style={S.card}>
           {editing === t.id ? (
             <div>
               <div style={{ ...S.modalTitle, marginBottom: 12 }}>Edit Tournament</div>
@@ -219,8 +230,9 @@ export default function AdminScreen({ onBack }) {
               </div>
             </div>
           )}
-        </div>
-      ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

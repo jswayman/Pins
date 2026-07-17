@@ -205,8 +205,8 @@ export default function PickEntryScreen({ poolCode, tournamentId, pool, onBack, 
               const g = golfers.find(x => x.id === gId);
               return (
                 <div key={gId} style={{
-                  background: "rgba(212,175,55,0.12)",
-                  border: `1px solid rgba(212,175,55,0.3)`,
+                  background: C.goldDim,
+                  border: `1px solid ${C.goldBorder}`,
                   borderRadius: 6, padding: "2px 8px",
                   fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.gold,
                   cursor: "pointer",

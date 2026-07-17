@@ -37,7 +37,7 @@ function PayoutBar({ payout, totalEntries, entryFeeCents }) {
   if (!totalPot) return null;
   const labels = ["1st", "2nd", "3rd", "4th", "5th"];
   return (
-    <div style={{ ...S.card, marginBottom: 16 }}>
+    <div style={{ ...S.container, marginBottom: 12 }}>
       <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.75rem", color: C.textDim, letterSpacing: "0.08em", marginBottom: 8 }}>
         PRIZE POOL · {fmt$(totalPot)} ({totalEntries} entr{totalEntries === 1 ? "y" : "ies"} × {fmt$(entryFeeCents)})
       </div>
@@ -45,8 +45,8 @@ function PayoutBar({ payout, totalEntries, entryFeeCents }) {
         {places.map(([pos, pct]) => (
           <div key={pos} style={{
             flex: 1, minWidth: 60,
-            background: "rgba(212,175,55,0.08)",
-            border: `1px solid rgba(212,175,55,0.2)`,
+            background: C.goldDim,
+            border: `1px solid ${C.goldBorder}`,
             borderRadius: 8, padding: "6px 8px", textAlign: "center",
           }}>
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.75rem", color: C.textDim }}>{labels[Number(pos)-1]}</div>
@@ -68,8 +68,8 @@ function EntryCard({ entry, rank, currentUserId, expanded, onToggle }) {
   return (
     <div
       style={{
-        background: isMe ? "rgba(212,175,55,0.07)" : C.bgCard,
-        border: `1px solid ${isMe ? "rgba(212,175,55,0.25)" : C.border}`,
+        background: isMe ? C.goldDim : C.bgCard,
+        border: `1px solid ${isMe ? C.goldBorder : C.border}`,
         borderRadius: 12, marginBottom: 8, overflow: "hidden",
         cursor: "pointer",
       }}
@@ -221,7 +221,7 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
 
         {/* Join code */}
         {pool.status === "open" && (
-          <div style={{ ...S.card, marginBottom: 14, textAlign: "center" }}>
+          <div style={{ ...S.container, marginBottom: 14, textAlign: "center" }}>
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.textDim, letterSpacing: "0.1em", marginBottom: 4 }}>
               JOIN CODE
             </div>
