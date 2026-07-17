@@ -4,13 +4,14 @@ import { getToken } from "../api";
 import AvatarPicker from "./AvatarPicker";
 import PwInput from "./PwInput";
 import { formatPhone } from "../utils/formatPhone";
-import S from "./styles";
+import S, { C } from "./styles";
 
 export default function ProfileModal({ currentUser, onClose, onUpdated, onSignOut }) {
   const token = getToken();
 
-  const [firstName,       setFirstName]       = useState(currentUser.first_name  || "");
-  const [lastName,        setLastName]        = useState(currentUser.last_name   || "");
+  const [firstName,       setFirstName]       = useState(currentUser.firstName  || currentUser.first_name  || "");
+  const [lastName,        setLastName]        = useState(currentUser.lastName   || currentUser.last_name   || "");
+  const [displayName,     setDisplayName]     = useState(currentUser.displayName || currentUser.display_name || "");
   const [username,        setUsername]        = useState(currentUser.username);
   const [email,           setEmail]           = useState(currentUser.email);
   const [phone,           setPhone]           = useState(currentUser.phone || "");
@@ -60,7 +61,7 @@ export default function ProfileModal({ currentUser, onClose, onUpdated, onSignOu
     try {
       const payload = {
         token,
-        firstName, lastName, username, email, phone, avatar,
+        firstName, lastName, displayName, username, email, phone, avatar,
         ...(showPwSection ? { currentPassword, newPassword } : {}),
       };
       const data = await updateProfile(payload);
@@ -96,6 +97,11 @@ export default function ProfileModal({ currentUser, onClose, onUpdated, onSignOu
             <label style={S.label}>Last Name</label>
             <input style={S.input} value={lastName} onChange={e => { setLastName(e.target.value); setError(""); }} />
           </div>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <label style={S.label}>Display Name <span style={{ color: C.textDim, fontWeight: 400, textTransform: "none", fontSize: "0.7rem" }}>(shown on leaderboards)</span></label>
+          <input style={S.input} value={displayName} placeholder="Leave blank to use username" onChange={e => { setDisplayName(e.target.value); setError(""); }} />
         </div>
 
         <div style={{ marginTop: 12 }}>

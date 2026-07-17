@@ -15,7 +15,7 @@ function statusDot(tournamentStatus) {
   return <span style={{ color: C.textDim, fontSize: "0.6rem", marginRight: 4 }}>○</span>;
 }
 
-function PoolCard({ pool, onOpen, onManage, isHost }) {
+function PoolCard({ pool, onOpen, onManage, isHost, showHostBadge }) {
   const statusStyle = pool.status === "open" ? S.badgeGreen : pool.status === "locked" ? S.badgeGold : S.badgeGray;
 
   return (
@@ -25,9 +25,19 @@ function PoolCard({ pool, onOpen, onManage, isHost }) {
       onMouseEnter={e => e.currentTarget.style.background = C.bgCardHover}
       onMouseLeave={e => e.currentTarget.style.background = C.bgCard}
     >
+      {/* Top row: name + price */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <div style={S.poolCardTitle}>{pool.name}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <div style={{ ...S.poolCardTitle, margin: 0 }}>{pool.name}</div>
+            {showHostBadge && (
+              <span style={{
+                background: C.goldDim, border: `1px solid ${C.goldBorder}`,
+                borderRadius: 6, padding: "1px 7px",
+                fontFamily: FONT_DISPLAY, fontSize: "0.6rem", color: C.gold, letterSpacing: "0.06em", flexShrink: 0,
+              }}>YOU HOST</span>
+            )}
+          </div>
           <div style={{ ...S.poolCardMeta, marginTop: 2 }}>
             {statusDot(pool.tournament_status)}
             {pool.tournament_name}
@@ -47,6 +57,8 @@ function PoolCard({ pool, onOpen, onManage, isHost }) {
           </div>
         </div>
       </div>
+
+      {/* Bottom row: host info + manage/status */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
         <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textFaint }}>
           {pool.is_public && <span style={{ marginRight: 6 }}>PUBLIC</span>}
@@ -203,24 +215,14 @@ export default function HomeScreen({ onOpenPool, onCreatePool, onManagePool, act
                   publicPools.map(p => {
                     const isMine = user && p.host_user_id === user.id;
                     return (
-                      <div key={p.code} style={{ position: "relative" }}>
-                        {isMine && (
-                          <div style={{
-                            position: "absolute", top: 8, right: 8, zIndex: 2,
-                            background: C.goldDim, border: `1px solid ${C.goldBorder}`,
-                            borderRadius: 8, padding: "2px 8px",
-                            fontFamily: FONT_DISPLAY, fontSize: "0.65rem", color: C.gold, letterSpacing: "0.06em",
-                          }}>
-                            YOU HOST
-                          </div>
-                        )}
-                        <PoolCard
-                          pool={p}
-                          onOpen={onOpenPool}
-                          onManage={onManagePool}
-                          isHost={isMine}
-                        />
-                      </div>
+                      <PoolCard
+                        key={p.code}
+                        pool={p}
+                        onOpen={onOpenPool}
+                        onManage={onManagePool}
+                        isHost={isMine}
+                        showHostBadge={isMine}
+                      />
                     );
                   })
                 )
