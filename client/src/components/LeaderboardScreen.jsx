@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { getPool } from "../api";
+import { getDisplayName } from "../utils/displayName";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
 import PinsHeader from "./PinsHeader";
 
@@ -83,7 +84,7 @@ function EntryCard({ entry, rank, currentUserId, expanded, onToggle }) {
 
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.9rem", fontWeight: 700, color: C.text }}>
-            {entry.username || entry.first_name}
+            {getDisplayName(entry)}
             {entry.entry_number > 1 && (
               <span style={{ fontFamily: FONT_DISPLAY, fontSize: "0.7rem", color: C.textDim, marginLeft: 6 }}>
                 #{entry.entry_number}

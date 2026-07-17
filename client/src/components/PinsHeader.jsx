@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { setToken } from "../api";
 import ProfileModal from "./ProfileModal";
+import { getDisplayName } from "../utils/displayName";
 import S, { C, FONT_DISPLAY } from "./styles";
 
 /**
@@ -33,9 +34,7 @@ export default function PinsHeader({ onBack, title, subtitle, right }) {
 
   if (!user) return null;
 
-  const displayName = user.first_name
-    ? `${user.first_name} ${user.last_name || ""}`.trim()
-    : user.username;
+  const displayName = getDisplayName(user);
 
   const isCustomAvatar = user.avatar?.startsWith("data:") || user.avatar?.startsWith("https://");
   const avatarContent  = isCustomAvatar

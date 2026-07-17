@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { getPool, lockPool, deletePool, getPayments, markPaid, markUnpaid, getPayoutReport } from "../api";
+import { getDisplayName } from "../utils/displayName";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
 import PinsHeader from "./PinsHeader";
 
@@ -173,7 +174,7 @@ export default function HostDashboard({ poolCode, onBack }) {
                 <div key={p.id} style={{ ...S.card, display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.9rem", fontWeight: 700, color: C.text }}>
-                      {p.username || `${p.first_name} ${p.last_name}`.trim()}
+                      {getDisplayName(p)}
                       {p.entry_number > 1 && (
                         <span style={{ color: C.textDim, fontSize: "0.75rem", marginLeft: 6 }}>#{p.entry_number}</span>
                       )}
@@ -237,7 +238,7 @@ export default function HostDashboard({ poolCode, onBack }) {
                   {place.winner ? (
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.9rem", fontWeight: 700, color: C.text }}>
-                        {place.winner.username}
+                        {getDisplayName(place.winner)}
                         {place.winner.entryNumber > 1 && (
                           <span style={{ color: C.textDim, fontSize: "0.75rem", marginLeft: 4 }}>#{place.winner.entryNumber}</span>
                         )}
@@ -263,7 +264,7 @@ export default function HostDashboard({ poolCode, onBack }) {
                   {e.rank}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontFamily: FONT_DISPLAY, fontSize: "0.9rem", color: C.text }}>{e.username}</span>
+                  <span style={{ fontFamily: FONT_DISPLAY, fontSize: "0.9rem", color: C.text }}>{getDisplayName(e)}</span>
                   {e.entryNumber > 1 && (
                     <span style={{ fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.textDim, marginLeft: 6 }}>#{e.entryNumber}</span>
                   )}

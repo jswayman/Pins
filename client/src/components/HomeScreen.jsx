@@ -62,7 +62,7 @@ function PoolCard({ pool, onOpen, onManage, isHost, showHostBadge }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
         <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textFaint }}>
           {pool.is_public && <span style={{ marginRight: 6 }}>PUBLIC</span>}
-          by {pool.host_username}
+          by {pool.host_display_name || pool.host_username}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {isHost && onManage && (
