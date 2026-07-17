@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pins — Release Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a1a0a;
+      color: rgba(255,255,255,0.85);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(0deg,transparent,transparent 48px,rgba(255,255,255,0.022) 48px,rgba(255,255,255,0.022) 50px),
+        repeating-linear-gradient(90deg,transparent,transparent 48px,rgba(255,255,255,0.022) 48px,rgba(255,255,255,0.022) 50px),
+        linear-gradient(180deg,#142814 0%,#1a3a1a 50%,#142814 100%);
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 40px 0 36px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 48px;
+    }
+    .logo-text {
+      font-family: 'Oswald', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #FFB612;
+    }
+    .tagline {
+      font-family: 'Oswald', sans-serif;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.18em;
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+
+    .release {
+      margin-bottom: 48px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 40px;
+    }
+    .release:last-child { border-bottom: none; }
+
+    .release-header {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .release-version {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #FFB612;
+      letter-spacing: 0.06em;
+    }
+    .release-date {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 0.1em;
+    }
+    .release-badge {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .badge-new { background: rgba(39,174,96,0.15); color: #27ae60; border: 1px solid rgba(39,174,96,0.3); }
+    .badge-fix { background: rgba(52,152,219,0.12); color: #5dade2; border: 1px solid rgba(52,152,219,0.25); }
+    .badge-improve { background: rgba(255,182,18,0.12); color: #FFB612; border: 1px solid rgba(255,182,18,0.25); }
+
+    .change-group { margin-bottom: 16px; }
+    .change-group-label {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.14em;
+      margin-bottom: 8px;
+    }
+    .change-list { list-style: none; }
+    .change-list li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 7px;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.92rem;
+    }
+    .change-list li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: #FFB612;
+      font-size: 0.7rem;
+      top: 3px;
+    }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.3);
+      font-family: 'Oswald', sans-serif; font-size: 0.82rem;
+      text-decoration: none; margin-bottom: 24px;
+      letter-spacing: 0.05em;
+    }
+    .back-link:hover { color: rgba(255,255,255,0.6); }
+
+    .help-link {
+      text-align: center;
+      margin-top: 24px;
+    }
+    .help-link a {
+      color: #FFB612; font-size: 0.9rem; text-decoration: none;
+    }
+    .help-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="/" class="back-link">← Back to Pins</a>
+
+    <div class="hero">
+      <div class="logo-text">PINS</div>
+      <div class="tagline">RELEASE NOTES</div>
+    </div>
+
+    <!-- v1.3 -->
+    <div class="release">
+      <div class="release-header">
+        <span class="release-version">v1.3</span>
+        <span class="release-date">JULY 2026</span>
+        <span class="release-badge badge-new">NEW</span>
+      </div>
+
+      <div class="change-group">
+        <div class="change-group-label">NEW FEATURES</div>
+        <ul class="change-list">
+          <li>Display Name support — set a custom display name shown on leaderboards (distinct from your username)</li>
+          <li>Profile modal — update display name, phone, email, avatar, and password from within the app</li>
+          <li>Avatar picker — choose from DiceBear styles, emoji, or upload a custom photo</li>
+          <li>Share / Invite — use the 📲 Invite button on the leaderboard to share a pool join link via native share sheet or clipboard</li>
+          <li>Bottom tab bar — persistent navigation for My Pools, Browse, New Pool, and Manage</li>
+          <li>Manage button — direct ⚙️ Manage shortcut on your hosted pool cards in My Pools</li>
+          <li>YOU HOST badge — public pool cards show a YOU HOST indicator when browsing pools you created</li>
+          <li>Help, About, and Release Notes pages</li>
+        </ul>
+      </div>
+
+      <div class="change-group">
+        <div class="change-group-label">IMPROVEMENTS</div>
+        <ul class="change-list">
+          <li>Public pool browse no longer hides pools you host — your own public pools are visible with a YOU HOST badge</li>
+          <li>Leaderboard entries now show Display Name, falling back to first/last name, then username</li>
+          <li>Host Dashboard payout report uses Display Name consistently</li>
+          <li>Pool cards in Browse show host's display name instead of raw username</li>
+          <li>Tab bar adds padding below all main screens so content is never hidden behind navigation</li>
+        </ul>
+      </div>
+
+      <div class="change-group">
+        <div class="change-group-label">BUG FIXES</div>
+        <ul class="change-list">
+          <li>Fixed avatar not displaying in header pill (showed default emoji instead of user's selected avatar)</li>
+          <li>Fixed profile fields appearing blank when display name or name was already set</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- v1.2 -->
+    <div class="release">
+      <div class="release-header">
+        <span class="release-version">v1.2</span>
+        <span class="release-date">JUNE 2026</span>
+        <span class="release-badge badge-improve">IMPROVEMENT</span>
+      </div>
+
+      <div class="change-group">
+        <div class="change-group-label">NEW FEATURES</div>
+        <ul class="change-list">
+          <li>Pick Entry screen — browse tournament field, search golfers by name, select 10 picks</li>
+          <li>Live leaderboard with earnings, rank, and pick status for each entry</li>
+          <li>Host Dashboard — Payments tab to mark entries paid/unpaid, Payout Report tab</li>
+          <li>Pool locking — host can lock picks before the tournament starts</li>
+          <li>Public pool browse — see open pools accepting entries</li>
+          <li>Pool detail screen — view all entries, their picks, and current standings</li>
+        </ul>
+      </div>
+
+      <div class="change-group">
+        <div class="change-group-label">IMPROVEMENTS</div>
+        <ul class="change-list">
+          <li>Pull-to-refresh on leaderboard for live tournament updates</li>
+          <li>Golfer field sorted by ESPN world ranking within each tier</li>
+          <li>Ties handled correctly — tied golfers split combined earnings per PGA Tour rules</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- v1.1 -->
+    <div class="release">
+      <div class="release-header">
+        <span class="release-version">v1.1</span>
+        <span class="release-date">MAY 2026</span>
+        <span class="release-badge badge-fix">FIX</span>
+      </div>
+
+      <div class="change-group">
+        <div class="change-group-label">BUG FIXES</div>
+        <ul class="change-list">
+          <li>Fixed ESPN API field not loading when tournament started but hadn't completed a round</li>
+          <li>Pool join code now case-insensitive</li>
+          <li>Fixed payout percentages not summing correctly in edge cases</li>
+          <li>Shared auth with GameGrid/GridIron — single account for all YourGameSpot apps</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- v1.0 -->
+    <div class="release">
+      <div class="release-header">
+        <span class="release-version">v1.0</span>
+        <span class="release-date">APRIL 2026</span>
+        <span class="release-badge badge-new">LAUNCH</span>
+      </div>
+
+      <div class="change-group">
+        <div class="change-group-label">INITIAL RELEASE</div>
+        <ul class="change-list">
+          <li>Create PGA Tour golf pick'em pools for any upcoming tournament</li>
+          <li>Players select 10 golfers; prize earnings determine pool standings</li>
+          <li>ESPN Golf API integration for live field and tournament results</li>
+          <li>Standard PGA Tour payout table (1st = 18%, 2nd = 10.9%, …)</li>
+          <li>Public and private pools with 6-character join codes</li>
+          <li>Configurable entry fees, entries per player, and payout splits</li>
+          <li>Shared YourGameSpot account — same login as GameGrid, GridIron, and GameNight</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="help-link">
+      <a href="/help.html">← View Help Guide</a>
+    </div>
+  </div>
+</body>
+</html>

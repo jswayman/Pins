@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pins — Help</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a1a0a;
+      color: rgba(255,255,255,0.85);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(0deg,transparent,transparent 48px,rgba(255,255,255,0.022) 48px,rgba(255,255,255,0.022) 50px),
+        repeating-linear-gradient(90deg,transparent,transparent 48px,rgba(255,255,255,0.022) 48px,rgba(255,255,255,0.022) 50px),
+        linear-gradient(180deg,#142814 0%,#1a3a1a 50%,#142814 100%);
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 40px 0 36px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 40px;
+    }
+    .logo-text {
+      font-family: 'Oswald', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #FFB612;
+    }
+    .tagline {
+      font-family: 'Oswald', sans-serif;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.18em;
+      font-size: 0.75rem;
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+    .hero p { color: rgba(255,255,255,0.5); font-size: 0.92rem; max-width: 480px; margin: 0 auto; }
+
+    .toc {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+    .toc h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.14em;
+      margin-bottom: 12px;
+    }
+    .toc ol { list-style: none; counter-reset: toc; }
+    .toc li { counter-increment: toc; margin-bottom: 6px; }
+    .toc a { color: #FFB612; text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { text-decoration: underline; }
+    .toc a::before { content: counter(toc) ". "; color: rgba(255,255,255,0.25); }
+
+    h2 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #FFB612;
+      letter-spacing: 0.08em;
+      padding-top: 48px;
+      margin-bottom: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    h2:first-of-type { border-top: none; padding-top: 0; }
+
+    h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.05em;
+      margin-top: 22px;
+      margin-bottom: 8px;
+    }
+
+    p { color: rgba(255,255,255,0.6); margin-bottom: 12px; }
+    strong { color: rgba(255,255,255,0.85); }
+
+    ul, ol { padding-left: 1.4em; color: rgba(255,255,255,0.6); margin-bottom: 12px; }
+    li { margin-bottom: 5px; }
+
+    .tip {
+      background: rgba(255,182,18,0.07);
+      border: 1px solid rgba(255,182,18,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.65);
+    }
+    .tip strong { color: #FFB612; }
+
+    .note {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .contact-box {
+      text-align: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 32px 24px;
+      margin-top: 48px;
+    }
+    .contact-box h2 { border-top: none; padding-top: 0; margin-bottom: 10px; }
+    .contact-box p { font-size: 0.92rem; color: rgba(255,255,255,0.5); margin-bottom: 18px; }
+    .contact-box a {
+      display: inline-block;
+      background: #FFB612; color: #0a1a0a;
+      font-family: 'Oswald', sans-serif; font-weight: 700;
+      font-size: 0.95rem; letter-spacing: 0.06em;
+      padding: 12px 28px; border-radius: 10px; text-decoration: none;
+    }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.3);
+      font-family: 'Oswald', sans-serif; font-size: 0.82rem;
+      text-decoration: none; margin-bottom: 24px;
+      letter-spacing: 0.05em;
+    }
+    .back-link:hover { color: rgba(255,255,255,0.6); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="/" class="back-link">← Back to Pins</a>
+
+    <div class="hero">
+      <div class="logo-text">PINS</div>
+      <div class="tagline">GOLF POOL · HELP</div>
+      <p>Everything you need to know about running and playing in a Pins golf pool.</p>
+    </div>
+
+    <nav class="toc">
+      <h3>TABLE OF CONTENTS</h3>
+      <ol>
+        <li><a href="#what-is-pins">What is Pins?</a></li>
+        <li><a href="#getting-started">Getting started</a></li>
+        <li><a href="#creating-a-pool">Creating a pool (hosts)</a></li>
+        <li><a href="#joining-a-pool">Joining a pool (players)</a></li>
+        <li><a href="#picking-golfers">Picking your golfers</a></li>
+        <li><a href="#scoring">How scoring works</a></li>
+        <li><a href="#host-dashboard">Host Dashboard</a></li>
+        <li><a href="#payments">Payments & payouts</a></li>
+        <li><a href="#profile">Your profile</a></li>
+        <li><a href="#contact">Contact & support</a></li>
+      </ol>
+    </nav>
+
+    <!-- 1 -->
+    <h2 id="what-is-pins">1 · What is Pins?</h2>
+    <p>Pins is a PGA Tour golf pick'em pool app. Before a tournament starts, each player selects 10 golfers from the tournament field. When the tournament concludes, your score is the combined prize earnings of all 10 golfers you picked. Highest total earnings wins the pot.</p>
+    <p>Pins supports any PGA Tour event pulled directly from the ESPN Golf API. Earnings are calculated from the tournament's official prize purse using the standard PGA payout percentage table.</p>
+    <div class="tip"><strong>Tip:</strong> Picks are locked by the host before the tournament starts — choose strategically! Picks can't be changed once the pool is locked.</div>
+
+    <!-- 2 -->
+    <h2 id="getting-started">2 · Getting started</h2>
+    <h3>Sign up</h3>
+    <p>Tap <strong>Sign Up</strong> on the login screen and fill in your username, email, phone, and choose an avatar. Your account is shared across all YourGameSpot apps (GameGrid, GridIron, GameNight).</p>
+    <h3>Sign in</h3>
+    <p>Enter your username or email and password. If you've signed in to another YourGameSpot app on this device, Pins may sign you in automatically via shared SSO.</p>
+    <h3>Forgot password</h3>
+    <p>Tap <strong>Forgot password?</strong> on the login screen. Enter your email and we'll send a 6-digit reset code. The code is valid for 15 minutes.</p>
+
+    <!-- 3 -->
+    <h2 id="creating-a-pool">3 · Creating a pool</h2>
+    <ol>
+      <li>Tap <strong>+ New Pool</strong> in the bottom tab bar.</li>
+      <li>Select a <strong>PGA tournament</strong> from the list. Only upcoming and currently active tournaments appear.</li>
+      <li>Give your pool a <strong>name</strong>.</li>
+      <li>Set the <strong>entry fee</strong> (cash — tracked manually) and <strong>max entries per player</strong>.</li>
+      <li>Choose <strong>public</strong> (visible in Browse) or private (join-by-code only).</li>
+      <li>Set your <strong>payout split</strong> — percentages must add up to 100%. Default is 70/20/10.</li>
+      <li>Tap <strong>Create Pool</strong>. Your 6-character join code is displayed immediately.</li>
+    </ol>
+    <div class="tip"><strong>Tip:</strong> Share the join code or use the 📲 Invite button on the leaderboard screen to send a direct link to anyone.</div>
+
+    <!-- 4 -->
+    <h2 id="joining-a-pool">4 · Joining a pool</h2>
+    <h3>By code</h3>
+    <p>Tap <strong>My Pools</strong> on the home screen, enter the 6-character code in <em>Join a Pool</em>, and tap <strong>Join</strong>.</p>
+    <h3>By link</h3>
+    <p>Tap any invite link you've received (e.g. <code>pins.yourgamespot.com?join=ABC123</code>). You'll be taken straight to the pool.</p>
+    <h3>Browse Public</h3>
+    <p>Tap <strong>Browse</strong> in the bottom tab bar to see all public pools. Tap any card to view it and join.</p>
+
+    <!-- 5 -->
+    <h2 id="picking-golfers">5 · Picking your golfers</h2>
+    <ol>
+      <li>Open your pool and tap <strong>+ Add Entry</strong>.</li>
+      <li>Browse or search the tournament field — all golfers in the ESPN field are listed with their current world ranking.</li>
+      <li>Tap a golfer to select them (highlighted in gold). Tap again to deselect.</li>
+      <li>Select exactly <strong>10 golfers</strong>. The submit button activates once you've chosen 10.</li>
+      <li>Tap <strong>Submit Picks</strong>. You can re-submit picks (replacing your previous ones) until the host locks the pool.</li>
+    </ol>
+    <div class="note">Once the host locks the pool, picks are final. You cannot add, remove, or change golfers after lock.</div>
+    <div class="tip"><strong>Strategy tip:</strong> Mix a few favourites (lower odds, safer earnings) with some mid-range picks who might have a breakout week. All 10 picks contribute to your total, so depth matters.</div>
+
+    <!-- 6 -->
+    <h2 id="scoring">6 · How scoring works</h2>
+    <p>Your pool score is the <strong>sum of prize earnings</strong> for all 10 golfers you selected, based on their final finishing position in the tournament.</p>
+    <h3>Prize purse</h3>
+    <p>The host sets the tournament prize purse (in cents). The admin may also set this from the Admin Panel. Pins uses the standard PGA Tour payout percentage table — e.g., 1st place typically earns 18% of the purse.</p>
+    <h3>Ties</h3>
+    <p>Tied golfers split the combined earnings of their tied positions equally, exactly as the PGA Tour does. For example, if two golfers tie for 3rd, each receives the average of the 3rd and 4th place earnings.</p>
+    <h3>Cut golfers</h3>
+    <p>Golfers who miss the cut earn $0 in your pool. If your picks include cut golfers, those spots contribute nothing to your total.</p>
+    <h3>Live updates</h3>
+    <p>The server polls ESPN every 5 minutes during active tournaments. The leaderboard refreshes automatically — pull down to refresh manually at any time.</p>
+
+    <!-- 7 -->
+    <h2 id="host-dashboard">7 · Host Dashboard</h2>
+    <p>As the pool host, tap <strong>⚙️ Manage</strong> (tab bar or pool card button) to open the Host Dashboard.</p>
+    <h3>Payments tab</h3>
+    <p>See every entry and their payment status. Tap <strong>Mark Paid</strong> to record a cash payment. Tap again to revert.</p>
+    <h3>Payout Report tab</h3>
+    <p>View the final prize breakdown by place, each winner's name, and their pool earnings. The report uses only <em>paid</em> entries to calculate collected pot size.</p>
+    <h3>Settings tab</h3>
+    <p>Lock or delete the pool. <strong>Lock picks</strong> prevents new entries and pick changes — do this before the tournament starts. Deleting a pool is permanent and removes all entry and payment data.</p>
+    <div class="tip"><strong>Host checklist:</strong> Share the join code → players submit picks → lock picks before tee-off → mark payments → check payout report after the final round.</div>
+
+    <!-- 8 -->
+    <h2 id="payments">8 · Payments & payouts</h2>
+    <p>Pins is a <strong>cash pool</strong> — there is no in-app payment processing. Entry fees and payouts are handled between players directly (cash, Venmo, etc.).</p>
+    <ul>
+      <li>The host collects entry fees from players.</li>
+      <li>After the tournament, the Payout Report shows who won and how much.</li>
+      <li>The host pays winners from the collected pot.</li>
+      <li>Mark payments in the Host Dashboard to track who has paid.</li>
+    </ul>
+
+    <!-- 9 -->
+    <h2 id="profile">9 · Your profile</h2>
+    <p>Tap the ⚙️ gear icon in the header → <strong>Update Profile</strong> to update:</p>
+    <ul>
+      <li><strong>Display Name</strong> — how you appear on leaderboards. Defaults to your username if blank.</li>
+      <li><strong>First / Last Name</strong></li>
+      <li><strong>Username</strong> — unique, used to log in</li>
+      <li><strong>Email</strong></li>
+      <li><strong>Phone</strong></li>
+      <li><strong>Avatar</strong> — DiceBear styles, emoji, or upload a custom photo</li>
+      <li><strong>Password</strong> — change via the expandable section</li>
+    </ul>
+
+    <!-- 10 -->
+    <div class="contact-box">
+      <h2 id="contact">Contact & support</h2>
+      <p>Sign in, tap ⚙️ in the header, and choose <strong>Contact Us</strong>. We reply to your account email. You can also email us directly:</p>
+      <a href="mailto:admin@yourgamespot.com">admin@yourgamespot.com</a>
+    </div>
+  </div>
+</body>
+</html>

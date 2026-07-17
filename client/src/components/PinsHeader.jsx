@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { setToken } from "../api";
 import ProfileModal from "./ProfileModal";
+import AboutModal from "./AboutModal";
 import { getDisplayName } from "../utils/displayName";
 import S, { C, FONT_DISPLAY } from "./styles";
 
@@ -20,6 +21,7 @@ export default function PinsHeader({ onBack, title, subtitle, right }) {
   const { user, logout, setUser } = useAuth();
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAbout,   setShowAbout]   = useState(false);
   const menuRef = useRef(null);
 
   // Close dropdown on outside click
@@ -138,6 +140,17 @@ export default function PinsHeader({ onBack, title, subtitle, right }) {
                   <span style={S.userMenuIcon}>📲</span> Share Pins
                 </button>
 
+                {/* Info pages */}
+                <button style={S.userMenuItem} onClick={() => { setMenuOpen(false); window.open("/help.html", "_blank"); }}>
+                  <span style={S.userMenuIcon}>❓</span> Help
+                </button>
+                <button style={S.userMenuItem} onClick={() => { setMenuOpen(false); setShowAbout(true); }}>
+                  <span style={S.userMenuIcon}>ℹ️</span> About Pins
+                </button>
+                <button style={S.userMenuItem} onClick={() => { setMenuOpen(false); window.open("/release-notes.html", "_blank"); }}>
+                  <span style={S.userMenuIcon}>📋</span> Release Notes
+                </button>
+
                 {/* External links */}
                 <button style={S.userMenuItem} onClick={() => { setMenuOpen(false); window.open("https://yourgamespot.com", "_blank"); }}>
                   <span style={S.gamespotPill}>
@@ -180,6 +193,8 @@ export default function PinsHeader({ onBack, title, subtitle, right }) {
           onSignOut={() => { setShowProfile(false); logout(); }}
         />
       )}
+
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
     </>
   );
 }
