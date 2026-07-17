@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { getPool } from "../api";
+import { getPool, getChatUnread } from "../api";
 import { getDisplayName } from "../utils/displayName";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
 import PinsHeader from "./PinsHeader";
 import ShareModal from "./ShareModal";
+import TournamentBoard from "./TournamentBoard";
+import PoolChat from "./PoolChat";
+import PoolChatButton from "./PoolChatButton";
 
 const REFRESH_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -151,6 +154,9 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
   const [expanded, setExpanded] = useState({});
   const [lastUpdated, setLastUpdated] = useState(null);
   const [showShare, setShowShare] = useState(false);
+  const [view, setView] = useState("pool"); // "pool" | "field"
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatUnread, setChatUnread] = useState(0);
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -174,6 +180,13 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
     return () => clearInterval(interval);
   }, [load]);
 
+  useEffect(() => {
+    if (!poolCode) return;
+    getChatUnread(poolCode)
+      .then(r => setChatUnread(r.unread || 0))
+      .catch(() => {});
+  }, [poolCode]);
+
   function toggleExpand(id) {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   }
@@ -196,6 +209,11 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
   const entries = pool.entries || [];
   const payout = pool.payout || {};
 
+  // Collect this user's pick IDs so Field view can highlight them
+  const myPickIds = entries
+    .filter(e => e.user_id === currentUser?.id)
+    .flatMap(e => e.picks || []);
+
   return (
     <>
     <div style={S.root}>
@@ -208,6 +226,7 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
         subtitle={pool.tournament_name}
         right={
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 6 }}>
+            <PoolChatButton unread={chatUnread} onClick={() => setChatOpen(v => !v)} />
             {refreshing && <span style={{ ...S.spinner, width: 16, height: 16, borderWidth: 2 }} />}
             {statusBadge(pool.status, pool.tournament_status)}
           </div>
@@ -217,75 +236,112 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
       <div style={{ ...S.pageWide, paddingBottom: 120 }}>
         {error && <div style={S.errorBanner}>{error}</div>}
 
-        {/* Join code */}
-        {pool.status === "open" && (
-          <div style={{ ...S.container, marginBottom: 14, textAlign: "center" }}>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.textDim, letterSpacing: "0.1em", marginBottom: 4 }}>
-              JOIN CODE
-            </div>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "2rem", fontWeight: 700, color: C.gold, letterSpacing: "0.2em" }}>
-              {poolCode}
-            </div>
-            <div style={{ fontFamily: FONT_BODY, fontSize: "0.75rem", color: C.textFaint, marginTop: 2 }}>
-              Share this code to invite players
-            </div>
-          </div>
-        )}
-
-        {/* Prize pool */}
-        <PayoutBar
-          payout={payout}
-          totalEntries={entries.length}
-          entryFeeCents={pool.entry_fee_cents}
-        />
-
-        {/* Action buttons */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          {canPick && (
-            <button style={{ ...S.btnPrimary, flex: 2 }} onClick={onPickEntry}>
-              + Add Entry
+        {/* View tabs: Pool standings vs TV field leaderboard */}
+        <div style={{
+          display: "flex", gap: 0, marginBottom: 14,
+          background: "rgba(255,255,255,0.04)", borderRadius: 10,
+          border: `1px solid ${C.border}`, overflow: "hidden",
+        }}>
+          {[
+            ["pool", "🏆 Pool"],
+            ["field", "📺 Field"],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setView(key)}
+              style={{
+                flex: 1, border: "none", cursor: "pointer",
+                padding: "10px 12px",
+                fontFamily: FONT_DISPLAY, fontSize: "0.85rem", fontWeight: 700,
+                letterSpacing: "0.06em",
+                background: view === key ? C.goldDim : "transparent",
+                color: view === key ? C.gold : C.textDim,
+                borderRight: key === "pool" ? `1px solid ${C.border}` : "none",
+              }}
+            >
+              {label}
             </button>
-          )}
-          <button
-            style={{ ...S.btnSmall, flexShrink: 0 }}
-            onClick={() => setShowShare(true)}
-            title="Invite players"
-          >
-            📲 Invite
-          </button>
-          {isHost && (
-            <button style={{ ...S.btnSmallGold, flexShrink: 0 }} onClick={onHostDashboard}>
-              ⚙️ Manage
-            </button>
-          )}
+          ))}
         </div>
 
-        {/* Leaderboard */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <div style={S.sectionTitle}>LEADERBOARD — {entries.length} {entries.length === 1 ? "ENTRY" : "ENTRIES"}</div>
-          {lastUpdated && (
-            <div style={{ fontFamily: FONT_BODY, fontSize: "0.7rem", color: C.textFaint }}>
-              Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </div>
-          )}
-        </div>
-
-        {entries.length === 0 ? (
-          <div style={S.empty}>
-            <div style={S.emptyIcon}>⛳</div>
-            <div>No entries yet.{canPick ? " Be the first to pick!" : ""}</div>
-          </div>
+        {view === "field" ? (
+          <TournamentBoard
+            tournamentId={pool.tournament_id}
+            myPickIds={myPickIds}
+          />
         ) : (
-          entries.map((entry, i) => (
-            <EntryCard
-              key={entry.id}
-              entry={entry}
-              rank={i + 1}
-              currentUserId={currentUser?.id}
-              expanded={!!expanded[entry.id]}
-              onToggle={() => toggleExpand(entry.id)}
+          <>
+            {/* Join code */}
+            {pool.status === "open" && (
+              <div style={{ ...S.container, marginBottom: 14, textAlign: "center" }}>
+                <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.textDim, letterSpacing: "0.1em", marginBottom: 4 }}>
+                  JOIN CODE
+                </div>
+                <div style={{ fontFamily: FONT_DISPLAY, fontSize: "2rem", fontWeight: 700, color: C.gold, letterSpacing: "0.2em" }}>
+                  {poolCode}
+                </div>
+                <div style={{ fontFamily: FONT_BODY, fontSize: "0.75rem", color: C.textFaint, marginTop: 2 }}>
+                  Share this code to invite players
+                </div>
+              </div>
+            )}
+
+            {/* Prize pool */}
+            <PayoutBar
+              payout={payout}
+              totalEntries={entries.length}
+              entryFeeCents={pool.entry_fee_cents}
             />
-          ))
+
+            {/* Action buttons */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              {canPick && (
+                <button style={{ ...S.btnPrimary, flex: 2 }} onClick={onPickEntry}>
+                  + Add Entry
+                </button>
+              )}
+              <button
+                style={{ ...S.btnSmall, flexShrink: 0 }}
+                onClick={() => setShowShare(true)}
+                title="Invite players"
+              >
+                📲 Invite
+              </button>
+              {isHost && (
+                <button style={{ ...S.btnSmallGold, flexShrink: 0 }} onClick={onHostDashboard}>
+                  ⚙️ Manage
+                </button>
+              )}
+            </div>
+
+            {/* Leaderboard */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={S.sectionTitle}>LEADERBOARD — {entries.length} {entries.length === 1 ? "ENTRY" : "ENTRIES"}</div>
+              {lastUpdated && (
+                <div style={{ fontFamily: FONT_BODY, fontSize: "0.7rem", color: C.textFaint }}>
+                  Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              )}
+            </div>
+
+            {entries.length === 0 ? (
+              <div style={S.empty}>
+                <div style={S.emptyIcon}>⛳</div>
+                <div>No entries yet.{canPick ? " Be the first to pick!" : ""}</div>
+              </div>
+            ) : (
+              entries.map((entry, i) => (
+                <EntryCard
+                  key={entry.id}
+                  entry={entry}
+                  rank={i + 1}
+                  currentUserId={currentUser?.id}
+                  expanded={!!expanded[entry.id]}
+                  onToggle={() => toggleExpand(entry.id)}
+                />
+              ))
+            )}
+          </>
         )}
       </div>
     </div>
@@ -297,6 +353,15 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
         onClose={() => setShowShare(false)}
       />
     )}
+
+    <PoolChat
+      poolId={pool.id}
+      poolCode={poolCode}
+      poolName={pool.name}
+      open={chatOpen}
+      onToggle={setChatOpen}
+      onUnreadChange={setChatUnread}
+    />
   </>
   );
 }

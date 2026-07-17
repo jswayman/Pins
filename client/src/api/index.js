@@ -78,6 +78,8 @@ export const deleteAccount = (token) =>
 // ── Tournaments ───────────────────────────────────────────────────────────────
 export const getTournaments       = ()        => get("/api/pins/tournaments");
 export const getTournament        = (id)      => get(`/api/pins/tournaments/${id}`);
+export const getTournamentLeaderboard = (id, force = false) =>
+  get(`/api/pins/tournaments/${id}/leaderboard${force ? "?refresh=1" : ""}`);
 export const syncTournaments      = ()        => post("/api/pins/admin/sync-tournaments");
 export const updateTournament     = (id, body) => put(`/api/pins/admin/tournaments/${id}`, body);
 export const refreshTournamentScores = (id)  => post(`/api/pins/admin/tournaments/${id}/refresh`);
@@ -101,3 +103,8 @@ export const getPayments       = (code)              => get(`/api/pins/pools/${c
 export const markPaid          = (code, entryId)     => post(`/api/pins/pools/${code}/payments`, { entryId, status: "paid" });
 export const markUnpaid        = (code, entryId)     => post(`/api/pins/pools/${code}/payments`, { entryId, status: "pending" });
 export const getPayoutReport   = (code)              => get(`/api/pins/pools/${code}/payout-report`);
+
+// ── Pool chat ─────────────────────────────────────────────────────────────────
+export const getChatHistory = (code) => get(`/api/pins/pools/${code}/chat`);
+export const getChatUnread  = (code) => get(`/api/pins/pools/${code}/chat/unread`);
+export const markChatRead   = (code) => post(`/api/pins/pools/${code}/chat/read`, {});
