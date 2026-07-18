@@ -5,10 +5,24 @@ import S, { C } from "./styles";
 
 const MODES = { login: "login", signup: "signup", forgot: "forgot" };
 
+const optInLabel = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: 10,
+  cursor: "pointer",
+  padding: "12px 14px",
+  background: "rgba(255,255,255,0.04)",
+  border: `1px solid ${C.borderMid}`,
+  borderRadius: 10,
+  marginBottom: 10,
+};
+
 export default function AuthScreen() {
   const { login: authLogin } = useAuth();
   const [mode, setMode]       = useState(MODES.login);
-  const [form, setForm]       = useState({ username: "", email: "", password: "", firstName: "", lastName: "" });
+  const [form, setForm]       = useState({ username: "", email: "", phone: "", password: "", firstName: "", lastName: "" });
+  const [smsOptIn, setSmsOptIn]     = useState(false);
+  const [emailOptIn, setEmailOptIn] = useState(false);
   const [error, setError]     = useState("");
   const [info, setInfo]       = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,8 +40,11 @@ export default function AuthScreen() {
       } else if (mode === MODES.signup) {
         const { user, token } = await signup({
           username: form.username, email: form.email,
+          phone: form.phone || undefined,
           password: form.password,
           first_name: form.firstName, last_name: form.lastName,
+          smsOptIn,
+          emailOptIn,
         });
         authLogin(user, token);
       } else {
@@ -84,6 +101,46 @@ export default function AuthScreen() {
               <label style={S.label}>Email</label>
               <input style={S.input} type="email" value={form.email} onChange={set("email")} required autoComplete="email" />
             </div>
+          )}
+
+          {mode === MODES.signup && (
+            <div style={S.formGroup}>
+              <label style={S.label}>Phone</label>
+              <input style={S.input} type="tel" value={form.phone} onChange={set("phone")} placeholder="(555) 555-5555" autoComplete="tel" />
+            </div>
+          )}
+
+          {/* Opt-ins immediately after contact fields so they stay on-screen */}
+          {mode === MODES.signup && (
+            <>
+              <label style={optInLabel}>
+                <input
+                  type="checkbox"
+                  checked={smsOptIn}
+                  onChange={e => setSmsOptIn(e.target.checked)}
+                  style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0, accentColor: C.gold, cursor: "pointer" }}
+                />
+                <span style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6 }}>
+                  I agree to receive text messages from Interlock Solutions, LLC (YourGameSpot) for account
+                  notifications, including password recovery codes. Message and data rates may apply.
+                  Up to 4 msgs/month. Reply STOP to opt out.{" "}
+                  <a href="https://yourgamespot.com/sms-policy.html" target="_blank" rel="noreferrer"
+                    style={{ color: C.text, textDecoration: "underline" }}>SMS Policy</a>
+                </span>
+              </label>
+              <label style={optInLabel}>
+                <input
+                  type="checkbox"
+                  checked={emailOptIn}
+                  onChange={e => setEmailOptIn(e.target.checked)}
+                  style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0, accentColor: C.gold, cursor: "pointer" }}
+                />
+                <span style={{ fontSize: 11, color: C.textDim, lineHeight: 1.6 }}>
+                  I agree to receive email notifications from YourGameSpot about my account, pools, and game
+                  updates. You can unsubscribe anytime.
+                </span>
+              </label>
+            </>
           )}
 
           {mode !== MODES.forgot && (
