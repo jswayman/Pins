@@ -9,7 +9,65 @@ import PinsHeader from "./PinsHeader";
 import PoolChat from "./PoolChat";
 import PoolChatButton from "./PoolChatButton";
 
-const TABS = { overview: "overview", players: "players", payouts: "payouts", settings: "settings" };
+function rosterFromPool(pool) {
+  const map = new Map();
+  const hostId = pool?.host_user_id || pool?.host_id;
+
+  for (const m of pool?.members || []) {
+    const uid = m.userId ?? m.user_id;
+    if (uid == null) continue;
+    map.set(uid, {
+      userId: uid,
+      username: m.username,
+      displayName: m.displayName || m.display_name,
+      firstName: m.firstName || m.first_name,
+      lastName: m.lastName || m.last_name,
+      isHost: uid === hostId,
+      hasPicks: false,
+      paymentStatus: "pending",
+      entries: [],
+    });
+  }
+
+  if (hostId != null && !map.has(hostId)) {
+    map.set(hostId, {
+      userId: hostId,
+      username: pool.host_username,
+      displayName: pool.host_display_name || pool.host_username,
+      isHost: true,
+      hasPicks: false,
+      paymentStatus: "pending",
+      entries: [],
+    });
+  }
+
+  for (const e of pool?.entries || []) {
+    const uid = e.user_id;
+    if (!map.has(uid)) {
+      map.set(uid, {
+        userId: uid,
+        username: e.username,
+        displayName: e.display_name,
+        firstName: e.first_name,
+        lastName: e.last_name,
+        isHost: uid === hostId,
+        hasPicks: true,
+        paymentStatus: e.payment_status === "paid" ? "paid" : "pending",
+        entries: [],
+      });
+    }
+    const row = map.get(uid);
+    row.hasPicks = true;
+    if (e.payment_status === "paid") row.paymentStatus = "paid";
+    row.entries.push({
+      entryId: e.id,
+      entryNumber: e.entry_number,
+      earningsCents: e.total_earnings_cents,
+      paymentStatus: e.payment_status === "paid" ? "paid" : "pending",
+    });
+  }
+  return [...map.values()];
+}
 
 function fmt$(cents) {
   if (!cents) return "$0";
@@ -37,7 +95,7 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
   const [roster, setRoster]       = useState([]);
   const [report, setReport]       = useState(null);
   const [loading, setLoading]     = useState(true);
-  const [tab, setTab]             = useState(TABS.players);
+  const [showMore, setShowMore]   = useState(false);
   const [error, setError]         = useState("");
   const [info, setInfo]           = useState("");
   const [locking, setLocking]     = useState(false);
@@ -66,10 +124,11 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
       setZelleEmail(poolData.zelle_email || "");
       setZellePhone(poolData.zelle_phone || "");
       const [rosterData, reportData] = await Promise.all([
-        getRoster(poolCode).catch(e => { setError(e.message); return { members: [] }; }),
+        getRoster(poolCode).catch(() => ({ members: [] })),
         getPayoutReport(poolCode).catch(() => null),
       ]);
-      setRoster(rosterData.members || []);
+      const members = rosterData.members || [];
+      setRoster(members.length ? members : rosterFromPool(poolData));
       if (reportData) setReport(reportData);
     } catch (e) {
       setError(e.message);
@@ -181,113 +240,97 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
         }
       />
 
-      <div style={{
-        position: "sticky", top: 52, zIndex: 90,
-        background: "rgba(6,16,6,0.98)",
-        borderBottom: `1px solid ${C.border}`,
-        padding: "8px 10px 10px",
-      }}>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 6,
-        }}>
-          {[
-            { id: TABS.players,  label: "Mark Paid", hint: "Players" },
-            { id: TABS.overview, label: "Overview",  hint: "Invite" },
-            { id: TABS.payouts,  label: "Payouts",   hint: "Prizes" },
-            { id: TABS.settings, label: "Settings",  hint: "Pool" },
-          ].map(t => {
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                style={{
-                  background: active ? C.gold : "rgba(255,255,255,0.05)",
-                  color: active ? "#0a1a0a" : C.text,
-                  border: `1px solid ${active ? C.gold : C.border}`,
-                  borderRadius: 10,
-                  padding: "9px 4px 8px",
-                  cursor: "pointer",
-                  fontFamily: FONT_DISPLAY,
-                }}
-              >
-                <div style={{ fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.03em" }}>{t.label}</div>
-                <div style={{ fontSize: "0.62rem", fontWeight: 600, opacity: 0.7, marginTop: 2 }}>{t.hint}</div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <div style={{ ...S.page, paddingBottom: 120 }}>
         {error && <div style={S.errorBanner}>{error}</div>}
         {info  && <div style={S.infoBanner}>{info}</div>}
 
-        {tab === TABS.overview && (
-          <OverviewTab
-            pool={pool}
-            poolCode={poolCode}
-            prize={prize}
-            memberCount={memberCount}
-            pickedCount={pickedCount}
-            noPicksCount={noPicksCount}
-            isLocked={isLocked}
-            locking={locking}
-            confirmDelete={confirmDelete}
-            deleting={deleting}
-            onCopyInvite={() => { copyInvite(poolCode); setInfo("Invite link copied."); }}
-            onLock={handleLock}
-            onOpenPlayers={() => setTab(TABS.players)}
-            onAskDelete={() => setConfirmDelete(true)}
-            onCancelDelete={() => setConfirmDelete(false)}
-            onDelete={handleDelete}
-          />
+        <div style={{ fontFamily: FONT_DISPLAY, fontSize: "1.05rem", fontWeight: 700, color: C.gold, margin: "4px 0 10px" }}>
+          Mark players paid
+        </div>
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <StatCard label="MEMBERS" value={memberCount} />
+          <StatCard label="PICKS IN" value={pickedCount} color={C.gold} />
+          <StatCard label="NO PICKS" value={noPicksCount} color={noPicksCount ? C.red : C.green} />
+        </div>
+
+        {fee === 0 && (
+          <div style={S.warnBanner}>
+            This pool is free, so there is nothing to mark paid. Set an entry fee under More settings if you want a cash pot.
+          </div>
         )}
 
-        {tab === TABS.players && (
-          <PlayersTab
-            roster={roster}
-            fee={fee}
-            prize={prize}
-            payingKey={payingKey}
-            onToggle={togglePayment}
-          />
+        <PlayersTab
+          roster={roster}
+          fee={fee}
+          prize={prize}
+          payingKey={payingKey}
+          onToggle={togglePayment}
+        />
+
+        <div style={{ ...S.card, marginTop: 16 }}>
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.85rem", fontWeight: 700, color: C.text, marginBottom: 8 }}>
+            Invite code
+          </div>
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "2rem", fontWeight: 700, color: C.gold, letterSpacing: "0.2em", textAlign: "center", marginBottom: 10 }}>
+            {poolCode}
+          </div>
+          <button style={S.btnSecondary} onClick={() => { copyInvite(poolCode); setInfo("Invite link copied."); }}>
+            Copy Invite Link
+          </button>
+        </div>
+
+        {!isLocked && (
+          <div style={{ ...S.card, borderColor: "rgba(212,175,55,0.2)" }}>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.85rem", fontWeight: 700, color: C.gold, marginBottom: 4 }}>
+              Lock picks
+            </div>
+            <div style={{ fontFamily: FONT_BODY, fontSize: "0.8rem", color: C.textDim, marginBottom: 12 }}>
+              Stop new entries before the first tee time.
+            </div>
+            <button style={{ ...S.btnPrimary, opacity: locking ? 0.6 : 1 }} onClick={handleLock} disabled={locking}>
+              {locking ? "Locking…" : "Lock Pool Now"}
+            </button>
+          </div>
         )}
 
-        {tab === TABS.payouts && report && (
-          <PayoutsTab report={report} />
-        )}
+        <button
+          type="button"
+          style={{ ...S.btnSecondary, marginTop: 8 }}
+          onClick={() => setShowMore(v => !v)}
+        >
+          {showMore ? "Hide pool settings" : "More: payouts, fee, delete"}
+        </button>
 
-        {tab === TABS.settings && (
-          <SettingsTab
-            pool={pool}
-            isLocked={isLocked}
-            nameDraft={nameDraft}
-            setNameDraft={setNameDraft}
-            publicDraft={publicDraft}
-            setPublicDraft={setPublicDraft}
-            feeDraft={feeDraft}
-            setFeeDraft={setFeeDraft}
-            payLink={payLink}
-            setPayLink={setPayLink}
-            zelleEmail={zelleEmail}
-            setZelleEmail={setZelleEmail}
-            zellePhone={zellePhone}
-            setZellePhone={setZellePhone}
-            saving={saving}
-            confirmDelete={confirmDelete}
-            deleting={deleting}
-            onSaveName={() => saveSettings({ name: nameDraft })}
-            onSavePublic={() => saveSettings({ isPublic: publicDraft })}
-            onSaveFee={() => saveSettings({ entryFeeCents: Math.round(parseFloat(feeDraft || "0") * 100) })}
-            onSavePay={() => saveSettings({ paymentLink: payLink, zelleEmail, zellePhone })}
-            onAskDelete={() => setConfirmDelete(true)}
-            onCancelDelete={() => setConfirmDelete(false)}
-            onDelete={handleDelete}
-          />
+        {showMore && (
+          <>
+            {report && <div style={{ marginTop: 14 }}><PayoutsTab report={report} /></div>}
+            <SettingsTab
+              pool={pool}
+              isLocked={isLocked}
+              nameDraft={nameDraft}
+              setNameDraft={setNameDraft}
+              publicDraft={publicDraft}
+              setPublicDraft={setPublicDraft}
+              feeDraft={feeDraft}
+              setFeeDraft={setFeeDraft}
+              payLink={payLink}
+              setPayLink={setPayLink}
+              zelleEmail={zelleEmail}
+              setZelleEmail={setZelleEmail}
+              zellePhone={zellePhone}
+              setZellePhone={setZellePhone}
+              saving={saving}
+              confirmDelete={confirmDelete}
+              deleting={deleting}
+              onSaveName={() => saveSettings({ name: nameDraft })}
+              onSavePublic={() => saveSettings({ isPublic: publicDraft })}
+              onSaveFee={() => saveSettings({ entryFeeCents: Math.round(parseFloat(feeDraft || "0") * 100) })}
+              onSavePay={() => saveSettings({ paymentLink: payLink, zelleEmail, zellePhone })}
+              onAskDelete={() => setConfirmDelete(true)}
+              onCancelDelete={() => setConfirmDelete(false)}
+              onDelete={handleDelete}
+            />
+          </>
         )}
       </div>
 
@@ -308,119 +351,6 @@ function StatCard({ label, value, color }) {
     <div style={{ ...S.card, flex: 1, textAlign: "center", marginBottom: 0 }}>
       <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.68rem", color: C.textDim, letterSpacing: "0.1em" }}>{label}</div>
       <div style={{ fontFamily: FONT_DISPLAY, fontSize: "1.35rem", fontWeight: 700, color: color || C.text }}>{value}</div>
-    </div>
-  );
-}
-
-function OverviewTab({
-  pool, poolCode, prize, memberCount, pickedCount, noPicksCount,
-  isLocked, locking, confirmDelete, deleting,
-  onCopyInvite, onLock, onOpenPlayers, onAskDelete, onCancelDelete, onDelete,
-}) {
-  return (
-    <div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <StatCard label="MEMBERS" value={memberCount} />
-        <StatCard label="PICKS IN" value={pickedCount} color={C.gold} />
-        <StatCard label="NO PICKS" value={noPicksCount} color={noPicksCount ? C.red : C.green} />
-      </div>
-
-      {pool.entry_fee_cents > 0 && (
-        <button
-          type="button"
-          onClick={onOpenPlayers}
-          style={{
-            ...S.card, width: "100%", textAlign: "left", cursor: "pointer",
-            borderColor: C.goldBorder, background: C.goldDim, marginBottom: 12,
-          }}
-        >
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: C.gold, marginBottom: 4 }}>
-            Mark players paid →
-          </div>
-          <div style={{ fontFamily: FONT_BODY, fontSize: "0.8rem", color: C.textDim }}>
-            Prize pot stays $0 until you tap Mark Paid next to each person.
-            {prize?.pendingCount > 0 ? ` ${prize.pendingCount} still unpaid.` : ""}
-          </div>
-        </button>
-      )}
-
-      {prize && pool.entry_fee_cents > 0 && (
-        <div style={S.card}>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.textDim, letterSpacing: "0.1em", marginBottom: 10 }}>
-            LIVE PRIZE POT · PAID ONLY
-          </div>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "1.8rem", fontWeight: 700, color: C.gold, marginBottom: 4 }}>
-            {fmt$(prize.collectedCents)}
-          </div>
-          <div style={{ fontFamily: FONT_BODY, fontSize: "0.8rem", color: C.textDim }}>
-            {prize.paidCount} paid × {fmt$(pool.entry_fee_cents)}
-            {prize.pendingCount > 0 && ` · ${prize.pendingCount} unpaid not included`}
-          </div>
-        </div>
-      )}
-
-      <div style={S.card}>
-        <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.85rem", fontWeight: 700, color: C.text, marginBottom: 8 }}>
-          Invite players
-        </div>
-        <div style={{ fontFamily: FONT_DISPLAY, fontSize: "2rem", fontWeight: 700, color: C.gold, letterSpacing: "0.2em", textAlign: "center", marginBottom: 6 }}>
-          {poolCode}
-        </div>
-        <div style={{ fontFamily: FONT_BODY, fontSize: "0.78rem", color: C.textFaint, textAlign: "center", marginBottom: 12 }}>
-          Joining adds them to the pool — they can chat before they pick.
-        </div>
-        <button style={S.btnSecondary} onClick={onCopyInvite}>Copy Invite Link</button>
-      </div>
-
-      {(pool.payment_link || pool.zelle_email || pool.zelle_phone) && (
-        <div style={S.card}>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.85rem", fontWeight: 700, color: C.text, marginBottom: 8 }}>
-            How players pay you
-          </div>
-          {pool.payment_link && (
-            <div style={{ fontFamily: FONT_BODY, fontSize: "0.82rem", color: C.textDim, marginBottom: 4 }}>
-              Link: <span style={{ color: C.gold }}>{pool.payment_link}</span>
-            </div>
-          )}
-          {pool.zelle_email && (
-            <div style={{ fontFamily: FONT_BODY, fontSize: "0.82rem", color: C.textDim, marginBottom: 4 }}>
-              Zelle email: {pool.zelle_email}
-            </div>
-          )}
-          {pool.zelle_phone && (
-            <div style={{ fontFamily: FONT_BODY, fontSize: "0.82rem", color: C.textDim }}>
-              Zelle phone: {pool.zelle_phone}
-            </div>
-          )}
-        </div>
-      )}
-
-      {!isLocked && (
-        <div style={{ ...S.card, borderColor: "rgba(212,175,55,0.2)" }}>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.85rem", fontWeight: 700, color: C.gold, marginBottom: 4 }}>
-            Lock picks
-          </div>
-          <div style={{ fontFamily: FONT_BODY, fontSize: "0.8rem", color: C.textDim, marginBottom: 12 }}>
-            Stop new entries before the first tee time. Players already in can still chat and watch the board.
-          </div>
-          <button style={{ ...S.btnPrimary, opacity: locking ? 0.6 : 1 }} onClick={onLock} disabled={locking}>
-            {locking ? "Locking…" : "Lock Pool Now"}
-          </button>
-        </div>
-      )}
-
-      {isLocked && (
-        <div style={S.warnBanner}>This pool is locked — no new entries can be submitted.</div>
-      )}
-
-      <DangerZone
-        memberCount={memberCount}
-        confirmDelete={confirmDelete}
-        deleting={deleting}
-        onAskDelete={onAskDelete}
-        onCancelDelete={onCancelDelete}
-        onDelete={onDelete}
-      />
     </div>
   );
 }

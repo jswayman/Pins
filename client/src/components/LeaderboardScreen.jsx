@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getPool, getChatUnread } from "../api";
+import { getPool, getChatUnread, markPaid, markUnpaid } from "../api";
 import { getDisplayName } from "../utils/displayName";
 import S, { C, FONT_DISPLAY, FONT_BODY } from "./styles";
 import PinsHeader from "./PinsHeader";
@@ -121,9 +121,10 @@ function PayMeCard({ pool, amountCents }) {
   );
 }
 
-function EntryCard({ entry, rank, currentUserId, expanded, onToggle }) {
+function EntryCard({ entry, rank, currentUserId, expanded, onToggle, isHost, fee, paying, onTogglePaid }) {
   const isMe = entry.user_id === currentUserId;
   const medal = medalIcon(rank);
+  const unpaid = entry.prizeEligible === false;
 
   return (
     <div
@@ -132,7 +133,7 @@ function EntryCard({ entry, rank, currentUserId, expanded, onToggle }) {
         border: `1px solid ${isMe ? C.goldBorder : C.border}`,
         borderRadius: 12, marginBottom: 8, overflow: "hidden",
         cursor: "pointer",
-        opacity: entry.prizeEligible === false ? 0.72 : 1,
+        opacity: unpaid ? 0.72 : 1,
       }}
       onClick={onToggle}
     >
@@ -150,7 +151,7 @@ function EntryCard({ entry, rank, currentUserId, expanded, onToggle }) {
               </span>
             )}
             {isMe && <span style={{ marginLeft: 6, fontSize: "0.7rem", color: C.gold }}>(you)</span>}
-            {entry.prizeEligible === false && (
+            {unpaid && (
               <span style={{
                 marginLeft: 6, fontSize: "0.62rem", letterSpacing: "0.06em",
                 color: C.red, border: `1px solid ${C.redBorder}`,
@@ -159,11 +160,29 @@ function EntryCard({ entry, rank, currentUserId, expanded, onToggle }) {
             )}
           </div>
           <div style={{ fontFamily: FONT_BODY, fontSize: "0.75rem", color: C.textDim, marginTop: 1 }}>
-            {entry.prizeEligible === false
+            {unpaid
               ? "Ineligible for cash — unpaid"
               : `${(entry.picksDetail || []).filter(p => p.position).length} / ${(entry.picks || []).length} golfers active`}
           </div>
         </div>
+
+        {isHost && fee > 0 && (
+          <button
+            type="button"
+            style={{
+              ...(unpaid ? S.btnSmallGold : S.btnSmallGreen),
+              flexShrink: 0,
+              opacity: paying ? 0.6 : 1,
+            }}
+            disabled={paying}
+            onClick={(ev) => {
+              ev.stopPropagation();
+              onTogglePaid(entry);
+            }}
+          >
+            {paying ? "Saving…" : unpaid ? "Mark Paid" : "✓ Paid"}
+          </button>
+        )}
 
         <div style={{ textAlign: "right" }}>
           <div style={{ fontFamily: FONT_DISPLAY, fontSize: "1.05rem", fontWeight: 700, color: C.gold }}>
@@ -221,6 +240,7 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
   const [view, setView] = useState("pool"); // "pool" | "field"
   const [chatOpen, setChatOpen] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
+  const [payingId, setPayingId] = useState(null);
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -253,6 +273,21 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
 
   function toggleExpand(id) {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  async function togglePaid(entry) {
+    const nextPaid = entry.prizeEligible === false;
+    setPayingId(entry.id);
+    setError("");
+    try {
+      if (nextPaid) await markPaid(poolCode, { entryId: entry.id });
+      else await markUnpaid(poolCode, { entryId: entry.id });
+      await load(true);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setPayingId(null);
+    }
   }
 
   if (loading) {
@@ -445,6 +480,10 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
                   currentUserId={currentUser?.id}
                   expanded={!!expanded[entry.id]}
                   onToggle={() => toggleExpand(entry.id)}
+                  isHost={isHost}
+                  fee={pool.entry_fee_cents || 0}
+                  paying={payingId === entry.id}
+                  onTogglePaid={togglePaid}
                 />
               ))
             )}
