@@ -37,31 +37,85 @@ function statusBadge(poolStatus, tournamentStatus) {
   return null;
 }
 
-function PayoutBar({ payout, totalEntries, entryFeeCents }) {
-  const places = Object.entries(payout).sort((a, b) => Number(a[0]) - Number(b[0]));
-  const totalPot = totalEntries * (entryFeeCents || 0);
-  if (!totalPot) return null;
-  const labels = ["1st", "2nd", "3rd", "4th", "5th"];
+function placeLabel(n) {
+  return ["1st", "2nd", "3rd", "4th", "5th"][Number(n) - 1] || `${n}th`;
+}
+
+function PayoutBar({ prize, payout, entryFeeCents }) {
+  const fee = prize?.entryFeeCents ?? entryFeeCents ?? 0;
+  if (!fee) return null;
+  const paidCount = prize?.paidCount ?? 0;
+  const pendingCount = prize?.pendingCount ?? 0;
+  const collected = prize?.collectedCents ?? paidCount * fee;
+  const places = prize?.places?.length
+    ? prize.places
+    : Object.entries(payout || {})
+        .map(([pos, pct]) => ({ place: Number(pos), pct: Number(pct) }))
+        .sort((a, b) => a.place - b.place);
+  if (!places.length) return null;
   return (
     <div style={{ ...S.container, marginBottom: 12 }}>
-      <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.75rem", color: C.textDim, letterSpacing: "0.08em", marginBottom: 8 }}>
-        PRIZE POOL · {fmt$(totalPot)} ({totalEntries} entr{totalEntries === 1 ? "y" : "ies"} × {fmt$(entryFeeCents)})
+      <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.75rem", color: C.textDim, letterSpacing: "0.08em", marginBottom: 4 }}>
+        PRIZE POOL · {fmt$(collected)} ({paidCount} paid × {fmt$(fee)})
       </div>
+      {pendingCount > 0 && (
+        <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textFaint, marginBottom: 8 }}>
+          {pendingCount} unpaid {pendingCount === 1 ? "entry is" : "entries are"} not in the pot
+        </div>
+      )}
+      {pendingCount === 0 && <div style={{ height: 4 }} />}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {places.map(([pos, pct]) => (
-          <div key={pos} style={{
+        {places.map(p => (
+          <div key={p.place} style={{
             flex: 1, minWidth: 60,
             background: C.goldDim,
             border: `1px solid ${C.goldBorder}`,
             borderRadius: 8, padding: "6px 8px", textAlign: "center",
           }}>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.75rem", color: C.textDim }}>{labels[Number(pos)-1]}</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.75rem", color: C.textDim }}>{placeLabel(p.place)}</div>
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.9rem", fontWeight: 700, color: C.gold }}>
-              {fmt$(Math.round(Number(pct) / 100 * totalPot))}
+              {fmt$(p.amountCents ?? Math.round(Number(p.pct) / 100 * collected))}
             </div>
-            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.68rem", color: C.textFaint }}>{pct}%</div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.68rem", color: C.textFaint }}>{p.pct}%</div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function PayMeCard({ pool, amountCents }) {
+  const link = pool.payment_link;
+  const zelleEmail = pool.zelle_email;
+  const zellePhone = pool.zelle_phone;
+  if (!link && !zelleEmail && !zellePhone) return null;
+  return (
+    <div style={{
+      ...S.card, marginBottom: 12,
+      borderColor: C.goldBorder, background: C.goldDim,
+    }}>
+      <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.8rem", fontWeight: 700, color: C.gold, marginBottom: 4 }}>
+        Entry due · {fmt$(amountCents)}
+      </div>
+      <div style={{ fontFamily: FONT_BODY, fontSize: "0.78rem", color: C.textDim, marginBottom: 10 }}>
+        The host has not marked you paid yet. Send your entry fee, then they will update the pot.
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {link && (
+          <a href={link} target="_blank" rel="noopener noreferrer" style={{ ...S.btnSmallGold, textDecoration: "none" }}>
+            Pay host
+          </a>
+        )}
+        {zelleEmail && (
+          <button style={S.btnSmall} onClick={() => navigator.clipboard?.writeText(zelleEmail)}>
+            Copy Zelle email
+          </button>
+        )}
+        {zellePhone && (
+          <button style={S.btnSmall} onClick={() => navigator.clipboard?.writeText(zellePhone)}>
+            Copy Zelle phone
+          </button>
+        )}
       </div>
     </div>
   );
@@ -78,6 +132,7 @@ function EntryCard({ entry, rank, currentUserId, expanded, onToggle }) {
         border: `1px solid ${isMe ? C.goldBorder : C.border}`,
         borderRadius: 12, marginBottom: 8, overflow: "hidden",
         cursor: "pointer",
+        opacity: entry.prizeEligible === false ? 0.72 : 1,
       }}
       onClick={onToggle}
     >
@@ -95,9 +150,18 @@ function EntryCard({ entry, rank, currentUserId, expanded, onToggle }) {
               </span>
             )}
             {isMe && <span style={{ marginLeft: 6, fontSize: "0.7rem", color: C.gold }}>(you)</span>}
+            {entry.prizeEligible === false && (
+              <span style={{
+                marginLeft: 6, fontSize: "0.62rem", letterSpacing: "0.06em",
+                color: C.red, border: `1px solid ${C.redBorder}`,
+                borderRadius: 6, padding: "1px 6px", verticalAlign: "middle",
+              }}>UNPAID</span>
+            )}
           </div>
           <div style={{ fontFamily: FONT_BODY, fontSize: "0.75rem", color: C.textDim, marginTop: 1 }}>
-            {(entry.picksDetail || []).filter(p => p.position).length} / {(entry.picks || []).length} golfers active
+            {entry.prizeEligible === false
+              ? "Ineligible for cash — unpaid"
+              : `${(entry.picksDetail || []).filter(p => p.position).length} / ${(entry.picks || []).length} golfers active`}
           </div>
         </div>
 
@@ -226,7 +290,9 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
         subtitle={pool.tournament_name}
         right={
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 6 }}>
-            <PoolChatButton unread={chatUnread} onClick={() => setChatOpen(v => !v)} />
+            {pool.isMember !== false && (
+              <PoolChatButton unread={chatUnread} onClick={() => setChatOpen(v => !v)} />
+            )}
             {refreshing && <span style={{ ...S.spinner, width: 16, height: 16, borderWidth: 2 }} />}
             {statusBadge(pool.status, pool.tournament_status)}
           </div>
@@ -286,12 +352,16 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
               </div>
             )}
 
-            {/* Prize pool */}
+            {/* Prize pool — paid entries only */}
             <PayoutBar
+              prize={pool.prize}
               payout={payout}
-              totalEntries={entries.length}
               entryFeeCents={pool.entry_fee_cents}
             />
+
+            {entries.some(e => e.user_id === currentUser?.id && e.prizeEligible === false) && (
+              <PayMeCard pool={pool} amountCents={pool.entry_fee_cents} />
+            )}
 
             {/* Action buttons */}
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
@@ -331,7 +401,7 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
               {pool.prize_purse_cents > 0 && (
                 <> ({fmt$(pool.prize_purse_cents)})</>
               )}
-              . Your total = sum of your 10 picks. Cash paid out comes from entry fees, not the PGA purse.{" "}
+              . Your total = sum of your 10 picks. Cash paid out comes from paid entry fees only — unpaid entries stay on the board but cannot win money.{" "}
               <button
                 type="button"
                 onClick={() => window.open("/help.html#scoring", "_blank")}
@@ -360,11 +430,11 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
                 <div>No entries yet.{canPick ? " Be the first to pick!" : ""}</div>
               </div>
             ) : (
-              entries.map((entry, i) => (
+              entries.map((entry) => (
                 <EntryCard
                   key={entry.id}
                   entry={entry}
-                  rank={i + 1}
+                  rank={entry.rank || 0}
                   currentUserId={currentUser?.id}
                   expanded={!!expanded[entry.id]}
                   onToggle={() => toggleExpand(entry.id)}
@@ -384,14 +454,16 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
       />
     )}
 
-    <PoolChat
-      poolId={pool.id}
-      poolCode={poolCode}
-      poolName={pool.name}
-      open={chatOpen}
-      onToggle={setChatOpen}
-      onUnreadChange={setChatUnread}
-    />
+    {pool.isMember !== false && (
+      <PoolChat
+        poolId={pool.id}
+        poolCode={poolCode}
+        poolName={pool.name}
+        open={chatOpen}
+        onToggle={setChatOpen}
+        onUnreadChange={setChatUnread}
+      />
+    )}
   </>
   );
 }

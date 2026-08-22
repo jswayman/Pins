@@ -54,6 +54,9 @@ function PoolCard({ pool, onOpen, onManage, isHost, showHostBadge }) {
           </div>
           <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textDim, marginTop: 1 }}>
             {pool.entry_count} {Number(pool.entry_count) === 1 ? "entry" : "entries"}
+            {pool.my_entry_count != null && Number(pool.my_entry_count) === 0 && (
+              <div style={{ color: C.gold, marginTop: 2 }}>No picks yet</div>
+            )}
           </div>
         </div>
       </div>

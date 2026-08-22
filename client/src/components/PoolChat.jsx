@@ -33,7 +33,8 @@ export default function PoolChat({ poolId, poolCode, poolName, open: openProp, o
     const handler = (msg) => {
       if (String(msg.poolId) !== String(poolId)) return;
       setMessages(prev => [...prev, msg]);
-      if (!openRef.current) {
+      const isMine = String(msg.userId || msg.user_id) === String(user?.id);
+      if (!openRef.current && !isMine) {
         setUnread(n => {
           const next = n + 1;
           onUnreadChange?.(next);
@@ -43,7 +44,7 @@ export default function PoolChat({ poolId, poolCode, poolName, open: openProp, o
     };
     s.on("pins:pool:chat", handler);
     return () => s.off("pins:pool:chat", handler);
-  }, [poolId, poolCode]);
+  }, [poolId, poolCode, user?.id, onUnreadChange]);
 
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -39,8 +39,9 @@ export default function App() {
   const [activePool, setActivePool]     = useState(null);
   const [pickContext, setPickContext]   = useState(null);
 
-  // Navigate to a pool's leaderboard
-  function openPool(code) {
+  // Navigate to a pool's leaderboard — joining adds membership (My Pools + chat)
+  async function openPool(code) {
+    try { await joinPool(code); } catch { /* already a member or view-only is fine */ }
     setActivePoolCode(code);
     setScreen("pool");
     if (window.location.search.includes("join=")) {
@@ -130,6 +131,11 @@ export default function App() {
         <HostDashboard
           poolCode={activePoolCode}
           onBack={() => setScreen("pool")}
+          onDeleted={() => {
+            setActivePoolCode(null);
+            setActivePool(null);
+            setScreen("home");
+          }}
         />
         <PinsTabBar
           screen={screen}

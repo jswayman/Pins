@@ -42,10 +42,11 @@ async function request(method, path, body, token) {
   return data;
 }
 
-const post = (path, body, token) => request("POST", path, body, token);
-const get  = (path, token)       => request("GET",  path, undefined, token);
-const put  = (path, body, token) => request("PUT",  path, body, token);
-const del  = (path, token)       => request("DELETE", path, undefined, token);
+const post  = (path, body, token) => request("POST", path, body, token);
+const get   = (path, token)       => request("GET",  path, undefined, token);
+const put   = (path, body, token) => request("PUT",  path, body, token);
+const patch = (path, body, token) => request("PATCH", path, body, token);
+const del   = (path, token)       => request("DELETE", path, undefined, token);
 
 // ── Auth (shared /api/auth/* routes) ─────────────────────────────────────────
 export const signup      = (body)  => post("/api/auth/signup", body);
@@ -90,8 +91,10 @@ export const getPools    = ()           => get("/api/pins/pools");
 export const getPool     = (code)       => get(`/api/pins/pools/${code}`);
 export const joinPool    = (code)       => post(`/api/pins/pools/${code}/join`);
 export const lockPool    = (code)       => post(`/api/pins/pools/${code}/lock`);
+export const updatePool  = (code, body) => patch(`/api/pins/pools/${code}`, body);
 export const deletePool  = (code)       => del(`/api/pins/pools/${code}`);
 export const getPublicPools = ()        => get("/api/pins/pools/public");
+export const getRoster   = (code)       => get(`/api/pins/pools/${code}/roster`);
 
 // ── Entries ───────────────────────────────────────────────────────────────────
 export const submitEntry  = (code, body)     => post(`/api/pins/pools/${code}/entries`, body);
