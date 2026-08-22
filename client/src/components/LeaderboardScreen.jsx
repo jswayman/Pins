@@ -378,9 +378,16 @@ export default function LeaderboardScreen({ poolCode, currentUser, onBack, onPic
                 📲 Invite
               </button>
               {isHost && (
-                <button style={{ ...S.btnSmallGold, flexShrink: 0 }} onClick={onHostDashboard}>
-                  ⚙️ Manage
-                </button>
+                <>
+                  {pool.entry_fee_cents > 0 && (
+                    <button style={{ ...S.btnSmallGold, flexShrink: 0 }} onClick={onHostDashboard}>
+                      Mark Paid
+                    </button>
+                  )}
+                  <button style={{ ...S.btnSmall, flexShrink: 0 }} onClick={onHostDashboard}>
+                    ⚙️ Manage
+                  </button>
+                </>
               )}
             </div>
 

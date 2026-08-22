@@ -37,7 +37,7 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
   const [roster, setRoster]       = useState([]);
   const [report, setReport]       = useState(null);
   const [loading, setLoading]     = useState(true);
-  const [tab, setTab]             = useState(TABS.overview);
+  const [tab, setTab]             = useState(TABS.players);
   const [error, setError]         = useState("");
   const [info, setInfo]           = useState("");
   const [locking, setLocking]     = useState(false);
@@ -181,28 +181,44 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
         }
       />
 
-      <div style={{ background: "rgba(6,16,6,0.97)", borderBottom: `1px solid rgba(255,255,255,0.07)` }}>
-        <div style={{ display: "flex" }}>
+      <div style={{
+        position: "sticky", top: 52, zIndex: 90,
+        background: "rgba(6,16,6,0.98)",
+        borderBottom: `1px solid ${C.border}`,
+        padding: "8px 10px 10px",
+      }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 6,
+        }}>
           {[
-            { id: TABS.overview, label: "Overview" },
-            { id: TABS.players,  label: "Players" },
-            { id: TABS.payouts,  label: "Payouts" },
-            { id: TABS.settings, label: "Settings" },
-          ].map(t => (
-            <button
-              key={t.id}
-              style={{
-                flex: 1, padding: "10px 4px", background: "transparent", border: "none",
-                borderBottom: tab === t.id ? `2px solid ${C.gold}` : "2px solid transparent",
-                fontFamily: FONT_DISPLAY, fontSize: "0.78rem", fontWeight: 600,
-                color: tab === t.id ? C.gold : C.textDim,
-                letterSpacing: "0.05em", cursor: "pointer",
-              }}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
+            { id: TABS.players,  label: "Mark Paid", hint: "Players" },
+            { id: TABS.overview, label: "Overview",  hint: "Invite" },
+            { id: TABS.payouts,  label: "Payouts",   hint: "Prizes" },
+            { id: TABS.settings, label: "Settings",  hint: "Pool" },
+          ].map(t => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                style={{
+                  background: active ? C.gold : "rgba(255,255,255,0.05)",
+                  color: active ? "#0a1a0a" : C.text,
+                  border: `1px solid ${active ? C.gold : C.border}`,
+                  borderRadius: 10,
+                  padding: "9px 4px 8px",
+                  cursor: "pointer",
+                  fontFamily: FONT_DISPLAY,
+                }}
+              >
+                <div style={{ fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.03em" }}>{t.label}</div>
+                <div style={{ fontSize: "0.62rem", fontWeight: 600, opacity: 0.7, marginTop: 2 }}>{t.hint}</div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -224,6 +240,7 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
             deleting={deleting}
             onCopyInvite={() => { copyInvite(poolCode); setInfo("Invite link copied."); }}
             onLock={handleLock}
+            onOpenPlayers={() => setTab(TABS.players)}
             onAskDelete={() => setConfirmDelete(true)}
             onCancelDelete={() => setConfirmDelete(false)}
             onDelete={handleDelete}
@@ -298,7 +315,7 @@ function StatCard({ label, value, color }) {
 function OverviewTab({
   pool, poolCode, prize, memberCount, pickedCount, noPicksCount,
   isLocked, locking, confirmDelete, deleting,
-  onCopyInvite, onLock, onAskDelete, onCancelDelete, onDelete,
+  onCopyInvite, onLock, onOpenPlayers, onAskDelete, onCancelDelete, onDelete,
 }) {
   return (
     <div>
@@ -307,6 +324,25 @@ function OverviewTab({
         <StatCard label="PICKS IN" value={pickedCount} color={C.gold} />
         <StatCard label="NO PICKS" value={noPicksCount} color={noPicksCount ? C.red : C.green} />
       </div>
+
+      {pool.entry_fee_cents > 0 && (
+        <button
+          type="button"
+          onClick={onOpenPlayers}
+          style={{
+            ...S.card, width: "100%", textAlign: "left", cursor: "pointer",
+            borderColor: C.goldBorder, background: C.goldDim, marginBottom: 12,
+          }}
+        >
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: C.gold, marginBottom: 4 }}>
+            Mark players paid →
+          </div>
+          <div style={{ fontFamily: FONT_BODY, fontSize: "0.8rem", color: C.textDim }}>
+            Prize pot stays $0 until you tap Mark Paid next to each person.
+            {prize?.pendingCount > 0 ? ` ${prize.pendingCount} still unpaid.` : ""}
+          </div>
+        </button>
+      )}
 
       {prize && pool.entry_fee_cents > 0 && (
         <div style={S.card}>
