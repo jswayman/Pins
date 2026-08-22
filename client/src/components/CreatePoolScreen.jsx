@@ -80,8 +80,14 @@ export default function CreatePoolScreen({ onBack, onCreated }) {
   useEffect(() => {
     getTournaments()
       .then(data => {
-        setTournaments(data);
-        if (data.length) setSelectedTournamentId(data[0].id);
+        const today = new Date().toISOString().split("T")[0];
+        const open = (data || []).filter(t => {
+          if (t.status === "completed") return false;
+          const lastDay = t.end_date || t.start_date;
+          return !lastDay || lastDay >= today;
+        });
+        setTournaments(open);
+        if (open.length) setSelectedTournamentId(open[0].id);
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
