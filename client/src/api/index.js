@@ -103,8 +103,10 @@ export const deleteEntry  = (code, entryId)  => del(`/api/pins/pools/${code}/ent
 
 // ── Payments (host) ───────────────────────────────────────────────────────────
 export const getPayments       = (code)              => get(`/api/pins/pools/${code}/payments`);
-export const markPaid          = (code, entryId)     => post(`/api/pins/pools/${code}/payments`, { entryId, status: "paid" });
-export const markUnpaid        = (code, entryId)     => post(`/api/pins/pools/${code}/payments`, { entryId, status: "pending" });
+export const markPaid = (code, { entryId, userId } = {}) =>
+  post(`/api/pins/pools/${code}/payments`, { entryId, userId, status: "paid" });
+export const markUnpaid = (code, { entryId, userId } = {}) =>
+  post(`/api/pins/pools/${code}/payments`, { entryId, userId, status: "pending" });
 export const getPayoutReport   = (code)              => get(`/api/pins/pools/${code}/payout-report`);
 
 // ── Pool chat ─────────────────────────────────────────────────────────────────

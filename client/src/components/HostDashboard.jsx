@@ -46,6 +46,7 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
   const [saving, setSaving]       = useState(false);
   const [chatOpen, setChatOpen]   = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
+  const [payingKey, setPayingKey] = useState(null);
 
   const [nameDraft, setNameDraft]         = useState("");
   const [publicDraft, setPublicDraft]     = useState(false);
@@ -56,20 +57,20 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
 
   const loadAll = useCallback(async () => {
     try {
-      const [poolData, rosterData, reportData] = await Promise.all([
-        getPool(poolCode),
-        getRoster(poolCode),
-        getPayoutReport(poolCode),
-      ]);
+      const poolData = await getPool(poolCode);
       setPool(poolData);
-      setRoster(rosterData.members || []);
-      setReport(reportData);
       setNameDraft(poolData.name || "");
       setPublicDraft(!!poolData.is_public);
       setFeeDraft(((poolData.entry_fee_cents || 0) / 100).toString());
       setPayLink(poolData.payment_link || "");
       setZelleEmail(poolData.zelle_email || "");
       setZellePhone(poolData.zelle_phone || "");
+      const [rosterData, reportData] = await Promise.all([
+        getRoster(poolCode).catch(e => { setError(e.message); return { members: [] }; }),
+        getPayoutReport(poolCode).catch(() => null),
+      ]);
+      setRoster(rosterData.members || []);
+      if (reportData) setReport(reportData);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -109,14 +110,24 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
     }
   }
 
-  async function togglePayment(entryId, currentStatus) {
+  async function togglePayment({ entryId, userId, currentStatus }) {
     const next = currentStatus === "paid" ? "pending" : "paid";
+    const key = entryId ? `e-${entryId}` : `u-${userId}`;
+    setError("");
+    setPayingKey(key);
     try {
-      if (next === "paid") await markPaid(poolCode, entryId);
-      else await markUnpaid(poolCode, entryId);
+      const result = next === "paid"
+        ? await markPaid(poolCode, { entryId, userId })
+        : await markUnpaid(poolCode, { entryId, userId });
+      if (result.prize) {
+        setPool(p => p ? { ...p, prize: result.prize } : p);
+        setReport(r => r ? { ...r, ...result.prize } : result.prize);
+      }
       await loadAll();
     } catch (e) {
       setError(e.message);
+    } finally {
+      setPayingKey(null);
     }
   }
 
@@ -223,6 +234,8 @@ export default function HostDashboard({ poolCode, onBack, onDeleted }) {
           <PlayersTab
             roster={roster}
             fee={fee}
+            prize={prize}
+            payingKey={payingKey}
             onToggle={togglePayment}
           />
         )}
@@ -376,7 +389,23 @@ function OverviewTab({
   );
 }
 
-function PlayersTab({ roster, fee, onToggle }) {
+function PayToggle({ paid, busy, onClick }) {
+  return (
+    <button
+      style={{
+        ...(paid ? S.btnSmallGreen : S.btnSmallGold),
+        minWidth: 108,
+        opacity: busy ? 0.6 : 1,
+      }}
+      disabled={busy}
+      onClick={onClick}
+    >
+      {busy ? "Saving…" : paid ? "✓ Paid" : "Mark Paid"}
+    </button>
+  );
+}
+
+function PlayersTab({ roster, fee, prize, payingKey, onToggle }) {
   if (!roster.length) {
     return (
       <div style={S.empty}>
@@ -386,58 +415,101 @@ function PlayersTab({ roster, fee, onToggle }) {
     );
   }
 
+  const unpaidMembers = roster.filter(m => {
+    if (!fee) return false;
+    if (!m.entries.length) return m.paymentStatus !== "paid";
+    return m.entries.some(e => e.paymentStatus !== "paid");
+  }).length;
+
   return (
     <div>
-      <div style={{ fontFamily: FONT_BODY, fontSize: "0.78rem", color: C.textDim, marginBottom: 12 }}>
-        Tap <strong style={{ color: C.gold }}>Mark Paid</strong> when you have their money. Unpaid players stay on the leaderboard but cannot win the pot.
-      </div>
-      {roster.map(m => (
-        <div key={m.userId} style={S.card}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: m.entries.length ? 10 : 0 }}>
-            <div>
-              <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: C.text }}>
-                {getDisplayName(m)}
-                {m.isHost && (
-                  <span style={{ marginLeft: 6, fontSize: "0.62rem", color: C.gold, letterSpacing: "0.06em" }}>HOST</span>
-                )}
-              </div>
-              <div style={{ fontFamily: FONT_BODY, fontSize: "0.75rem", color: m.hasPicks ? C.textDim : C.gold }}>
-                {m.hasPicks ? `${m.entries.length} ${m.entries.length === 1 ? "entry" : "entries"}` : "Joined · no picks yet"}
-              </div>
-            </div>
+      {fee > 0 && (
+        <div style={{ ...S.card, borderColor: C.goldBorder, background: C.goldDim }}>
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.72rem", color: C.textDim, letterSpacing: "0.1em" }}>
+            PRIZE POT · UPDATES WHEN YOU MARK PAID
           </div>
-          {m.entries.map(e => (
-            <div key={e.entryId} style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "8px 0 0",
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              marginTop: 8,
+          <div style={{ fontFamily: FONT_DISPLAY, fontSize: "1.8rem", fontWeight: 700, color: C.gold, margin: "4px 0 2px" }}>
+            {fmt$(prize?.collectedCents)}
+          </div>
+          <div style={{ fontFamily: FONT_BODY, fontSize: "0.8rem", color: C.textDim }}>
+            {prize?.paidCount || 0} paid {prize?.paidCount === 1 ? "entry" : "entries"} × {fmt$(fee)}
+            {unpaidMembers > 0 && ` · ${unpaidMembers} still unpaid`}
+          </div>
+          <div style={{ fontFamily: FONT_BODY, fontSize: "0.72rem", color: C.textFaint, marginTop: 6 }}>
+            Pot = paid entries only. You can still mark someone paid before they pick.
+          </div>
+        </div>
+      )}
+
+      <div style={{ fontFamily: FONT_BODY, fontSize: "0.78rem", color: C.textDim, marginBottom: 12 }}>
+        Tap the gold <strong style={{ color: C.gold }}>Mark Paid</strong> button when you have their money —
+        even if they have not picked yet. Unpaid players stay on the leaderboard but cannot win the pot.
+      </div>
+      {roster.map(m => {
+        const noPicks = !m.entries.length;
+        const memberPaid = m.paymentStatus === "paid";
+        return (
+          <div key={m.userId} style={S.card}>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+              marginBottom: m.entries.length ? 10 : 0,
             }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.82rem", color: C.text }}>
-                  Entry {e.entryNumber > 1 ? `#${e.entryNumber}` : ""}
-                  <span style={{ color: C.textDim, marginLeft: 6 }}>{fmt$(e.earningsCents)} earnings</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.95rem", fontWeight: 700, color: C.text }}>
+                  {getDisplayName(m)}
+                  {m.isHost && (
+                    <span style={{ marginLeft: 6, fontSize: "0.62rem", color: C.gold, letterSpacing: "0.06em" }}>HOST</span>
+                  )}
                 </div>
-                {fee > 0 && (
-                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.75rem", color: C.gold }}>
-                    {fmtDec$(fee)} due
+                <div style={{ fontFamily: FONT_BODY, fontSize: "0.75rem", color: m.hasPicks ? C.textDim : C.gold }}>
+                  {m.hasPicks
+                    ? `${m.entries.length} ${m.entries.length === 1 ? "entry" : "entries"}`
+                    : memberPaid
+                      ? "Paid · pot updates when they pick"
+                      : `Joined · no picks yet · ${fee > 0 ? `${fmtDec$(fee)} due` : "free"}`}
+                </div>
+              </div>
+              {fee > 0 && noPicks && (
+                <PayToggle
+                  paid={memberPaid}
+                  busy={payingKey === `u-${m.userId}`}
+                  onClick={() => onToggle({ userId: m.userId, currentStatus: m.paymentStatus })}
+                />
+              )}
+              {fee === 0 && noPicks && <span style={S.badgeGray}>FREE</span>}
+            </div>
+            {m.entries.map(e => (
+              <div key={e.entryId} style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "8px 0 0",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+                marginTop: 8,
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.82rem", color: C.text }}>
+                    Entry {e.entryNumber > 1 ? `#${e.entryNumber}` : ""}
+                    <span style={{ color: C.textDim, marginLeft: 6 }}>{fmt$(e.earningsCents)} earnings</span>
                   </div>
+                  {fee > 0 && (
+                    <div style={{ fontFamily: FONT_DISPLAY, fontSize: "0.75rem", color: e.paymentStatus === "paid" ? C.green : C.gold }}>
+                      {e.paymentStatus === "paid" ? "In the pot" : `${fmtDec$(fee)} due`}
+                    </div>
+                  )}
+                </div>
+                {fee > 0 ? (
+                  <PayToggle
+                    paid={e.paymentStatus === "paid"}
+                    busy={payingKey === `e-${e.entryId}`}
+                    onClick={() => onToggle({ entryId: e.entryId, currentStatus: e.paymentStatus })}
+                  />
+                ) : (
+                  <span style={S.badgeGray}>FREE</span>
                 )}
               </div>
-              {fee > 0 ? (
-                <button
-                  style={e.paymentStatus === "paid" ? S.btnSmallGreen : S.btnSmall}
-                  onClick={() => onToggle(e.entryId, e.paymentStatus)}
-                >
-                  {e.paymentStatus === "paid" ? "✓ Paid" : "Mark Paid"}
-                </button>
-              ) : (
-                <span style={S.badgeGray}>FREE</span>
-              )}
-            </div>
-          ))}
-        </div>
-      ))}
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
